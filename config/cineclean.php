@@ -40,6 +40,6 @@ return [
         'cache_ttl_minutes' => 360,
     ],
     'files' => [
-        'allow_delete' => (bool) env('CINECLEAN_ALLOW_DELETE', true),
+        'allow_delete' => (bool) env('CINECLEAN_ALLOW_DELETE', false),
     ],
 ];

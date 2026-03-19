@@ -4,11 +4,12 @@ use App\Models\MovieFile;
 use App\Services\SmbService;
 use App\Services\TmdbService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Mockery;
 
 uses(RefreshDatabase::class);
 
 it('deletes only the selected file by explicit request', function (): void {
+    config()->set('cineclean.files.allow_delete', true);
+
     $movieFile = MovieFile::query()->create([
         'smb_path' => 'Movies/Matrix/The.Matrix.1999.mkv',
         'filename' => 'The.Matrix.1999.mkv',

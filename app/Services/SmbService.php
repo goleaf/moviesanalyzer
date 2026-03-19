@@ -74,6 +74,15 @@ class SmbService
 
     private function runSmbCommand(string $command): string
     {
+        if (! $this->binaryExists()) {
+            throw new RuntimeException(
+                sprintf(
+                    'SMB command failed: smbclient binary not found. Install smbclient and set SMBCLIENT_BIN if needed (current: %s).',
+                    $this->binary,
+                ),
+            );
+        }
+
         $process = new Process([
             $this->binary,
             sprintf('//%s/%s', $this->host, $this->share),
@@ -94,6 +103,25 @@ class SmbService
         }
 
         return $process->getOutput();
+    }
+
+    private function binaryExists(): bool
+    {
+        if (str_contains($this->binary, '/')) {
+            return is_executable($this->binary);
+        }
+
+        $paths = explode(PATH_SEPARATOR, (string) getenv('PATH'));
+
+        foreach ($paths as $path) {
+            $candidate = rtrim($path, '/').'/'.$this->binary;
+
+            if (is_executable($candidate)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

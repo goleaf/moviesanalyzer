@@ -6,6 +6,7 @@
         'mov' => 'bg-sky-600/20 text-sky-300 border-sky-500/30',
         'wmv' => 'bg-pink-600/20 text-pink-300 border-pink-500/30',
     ][$file->extension] ?? 'bg-slate-600/20 text-slate-200 border-slate-500/30';
+    $deleteAllowed = (bool) config('cineclean.files.allow_delete', false);
 @endphp
 
 <tr class="border-t border-cine" data-file-row="{{ $file->id }}">
@@ -18,16 +19,22 @@
         </span>
     </td>
     <td class="px-4 py-3 text-right">
-        <button
-            type="button"
-            class="delete-trigger inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs border border-red-500/40 bg-red-900/30 hover:bg-red-800/40 transition"
-            data-id="{{ $file->id }}"
-            data-filename="{{ $file->filename }}"
-            data-size="{{ $file->formatted_size }}"
-            data-path="{{ $file->smb_path }}"
-            data-url="{{ route('cineclean.file.destroy', $file) }}"
-        >
-            DELETE
-        </button>
+        @if ($deleteAllowed)
+            <button
+                type="button"
+                class="delete-trigger inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs border border-red-500/40 bg-red-900/30 hover:bg-red-800/40 transition"
+                data-id="{{ $file->id }}"
+                data-filename="{{ $file->filename }}"
+                data-size="{{ $file->formatted_size }}"
+                data-path="{{ $file->smb_path }}"
+                data-url="{{ route('cineclean.file.destroy', $file) }}"
+            >
+                DELETE
+            </button>
+        @else
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs border border-slate-600/50 bg-slate-800/40 text-slate-400">
+                DELETE DISABLED
+            </span>
+        @endif
     </td>
 </tr>
