@@ -1,9 +1,10 @@
 <?php
 
 use App\Services\FilenameParser;
+use App\Services\FilenameRuleService;
 
 it('cleans movie filenames into canonical search titles', function (string $filename, string $expected): void {
-    $parsed = app(FilenameParser::class)->parse($filename);
+    $parsed = (new FilenameParser(new FilenameRuleService))->parse($filename);
 
     expect($parsed->cleanTitle)->toBe($expected);
 })->with([
@@ -16,7 +17,7 @@ it('cleans movie filenames into canonical search titles', function (string $file
 ]);
 
 it('adds transliterated cyrillic query variants', function (): void {
-    $parsed = app(FilenameParser::class)->parse('матрица.avi');
+    $parsed = (new FilenameParser(new FilenameRuleService))->parse('матрица.avi');
 
     expect($parsed->searchQueries)
         ->toContain('матрица')

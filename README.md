@@ -1,6 +1,6 @@
-# CineClean
+# moviesanalyzer
 
-CineClean is a Laravel + Blade movie library deduplication app for SMB shares.
+moviesanalyzer is a Laravel + Blade movie library deduplication app for SMB shares.
 It scans movie files on your NAS, matches them against TMDB, groups duplicates by TMDB movie ID, and lets you review duplicates before any manual delete action.
 
 ## Requirements
@@ -42,10 +42,19 @@ SMB_SHARE=Video
 SMB_PATH=Movies
 SMB_USERNAME=andrej
 SMB_PASSWORD=your-password
+SMB_BACKEND=auto
+SMB_WORKGROUP=
+SMBCLIENT_BIN=smbclient
+SMBCLIENT_CONFIG_FILE=
+SMB_TIMEOUT_SECONDS=180
 TMDB_API_KEY=your-api-key
 TMDB_TOKEN=your-read-token
-CINECLEAN_ALLOW_DELETE=false
+MOVIESANALYZER_ALLOW_DELETE=false
 ```
+
+If `smbclient` reports `Can't load ... smb.conf`, set `SMBCLIENT_CONFIG_FILE=/dev/null` or a valid `smb.conf` path.
+`SMB_BACKEND=auto` uses `icewind/smb` first, then falls back to CLI.
+For Homebrew/macOS reliability, set `SMB_BACKEND=cli`.
 
 ## CLI Scan
 
@@ -73,7 +82,7 @@ Done. 847 files | 143 duplicate groups | 312.40 GB wasted
            |                                 |
            v                                 v
 +---------------------------------------------------------+
-|                    Laravel App (CineClean)              |
+|                 Laravel App (moviesanalyzer)             |
 |                                                         |
 |  SmbService -> FilenameParser -> TmdbService            |
 |         \            |              /                   |
@@ -93,7 +102,7 @@ Done. 847 files | 143 duplicate groups | 312.40 GB wasted
 ## Safety
 
 - No automatic delete operations are performed.
-- Deletion is disabled by default (`CINECLEAN_ALLOW_DELETE=false`).
-- To allow manual deletion from the UI, set `CINECLEAN_ALLOW_DELETE=true`.
+- Deletion is disabled by default (`MOVIESANALYZER_ALLOW_DELETE=false`).
+- To allow manual deletion from the UI, set `MOVIESANALYZER_ALLOW_DELETE=true`.
 - File deletion only happens from the web UI after explicit confirmation.
 - TMDB responses are cached for 7 days.

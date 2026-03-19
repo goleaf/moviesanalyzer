@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DuplicatesController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\FilenameRulesController;
 use App\Http\Controllers\MoviesController;
 use App\Http\Controllers\ScanController;
 use Illuminate\Support\Facades\Route;
@@ -18,8 +19,15 @@ Route::middleware(['web'])
         Route::get('/movies', [MoviesController::class, 'index'])->name('movies.index');
         Route::get('/duplicates', [DuplicatesController::class, 'index'])->name('duplicates.index');
         Route::get('/unmatched', [MoviesController::class, 'unmatched'])->name('unmatched.index');
+        Route::post('/unmatched/rescan', [MoviesController::class, 'rescanUnmatched'])->name('unmatched.rescan');
+        Route::get('/parser-rules', [FilenameRulesController::class, 'index'])->name('rules.index');
+        Route::post('/parser-rules', [FilenameRulesController::class, 'store'])->name('rules.store');
+        Route::patch('/parser-rules/{filenameRule}', [FilenameRulesController::class, 'update'])->name('rules.update');
+        Route::delete('/parser-rules/{filenameRule}', [FilenameRulesController::class, 'destroy'])->name('rules.destroy');
+        Route::post('/parser-rules/preview', [FilenameRulesController::class, 'preview'])->name('rules.preview');
 
         Route::post('/unmatched/{movieFile}/search', [MoviesController::class, 'searchManual'])->name('unmatched.search');
+        Route::post('/unmatched/{movieFile}/google-assist', [MoviesController::class, 'googleAssist'])->name('unmatched.google-assist');
         Route::patch('/unmatched/{movieFile}/match', [MoviesController::class, 'applyManualMatch'])->name('unmatched.match');
         Route::patch('/unmatched/{movieFile}/skip', [MoviesController::class, 'skip'])->name('unmatched.skip');
 

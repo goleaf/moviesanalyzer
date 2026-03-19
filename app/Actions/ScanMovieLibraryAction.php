@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Data\ParsedFilename;
 use App\Data\TmdbMatch;
 use App\Enums\MatchStatus;
 use App\Models\MovieFile;
@@ -20,8 +21,7 @@ class ScanMovieLibraryAction
         public SmbService $smbService,
         public FilenameParser $filenameParser,
         public TmdbService $tmdbService,
-    ) {
-    }
+    ) {}
 
     public function handle(?Closure $progressCallback = null): ScanLog
     {
@@ -104,6 +104,14 @@ class ScanMovieLibraryAction
             }
 
             $match = TmdbMatch::unmatched();
+            $fallbackBaseName = pathinfo($videoFile['filename'], PATHINFO_FILENAME);
+            $parsedFilename = new ParsedFilename(
+                originalFilename: $videoFile['filename'],
+                baseName: $fallbackBaseName,
+                cleanTitle: $fallbackBaseName,
+                releaseYear: null,
+                searchQueries: [$fallbackBaseName],
+            );
 
             try {
                 $parsedFilename = $this->filenameParser->parse($videoFile['filename']);
@@ -126,6 +134,10 @@ class ScanMovieLibraryAction
                 'filename' => $videoFile['filename'],
                 'file_size_bytes' => $videoFile['file_size_bytes'],
                 'extension' => $videoFile['extension'],
+                'parsed_base_name' => $parsedFilename->baseName,
+                'parsed_clean_title' => $parsedFilename->cleanTitle,
+                'parsed_search_queries' => $parsedFilename->searchQueries,
+                'parsed_release_year' => $parsedFilename->releaseYear,
                 'scanned_at' => $now,
                 ...$match->toDatabaseAttributes(),
             ];

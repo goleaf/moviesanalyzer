@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'CineClean Duplicates')
+@section('title', 'moviesanalyzer Duplicates')
 
 @section('content')
     <section class="space-y-5">
@@ -132,7 +132,7 @@
                     const response = await fetch(pendingTarget.dataset.url, {
                         method: 'DELETE',
                         headers: {
-                            'X-CSRF-TOKEN': window.CineClean.csrf,
+                            'X-CSRF-TOKEN': window.MoviesAnalyzer.csrf,
                             'Accept': 'application/json',
                         },
                     });
@@ -150,11 +150,11 @@
                         setTimeout(() => row.remove(), 300);
                     }
 
-                    window.CineClean.toast('File deleted from SMB share.', 'success');
+                    window.MoviesAnalyzer.toast('File deleted from SMB share.', 'success');
                     modal.classList.add('hidden');
                     pendingTarget = null;
                 } catch (error) {
-                    window.CineClean.toast(error.message || 'Delete failed.', 'error');
+                    window.MoviesAnalyzer.toast(error.message || 'Delete failed.', 'error');
                 }
             });
         })();

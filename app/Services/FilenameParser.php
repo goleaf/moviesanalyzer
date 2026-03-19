@@ -84,10 +84,13 @@ class FilenameParser
         'rarbg',
     ];
 
+    public function __construct(private FilenameRuleService $filenameRuleService) {}
+
     public function parse(string $filename): ParsedFilename
     {
         $baseName = pathinfo($filename, PATHINFO_FILENAME);
         $normalized = $this->normalizeBaseName($baseName);
+        $normalized = $this->filenameRuleService->applyReplacementRules($normalized);
         $normalized = $this->moveTrailingArticle($normalized);
         $releaseYear = $this->extractReleaseYear($normalized);
 
@@ -190,6 +193,10 @@ class FilenameParser
             return true;
         }
 
+        if ($this->filenameRuleService->shouldRemoveToken($token)) {
+            return true;
+        }
+
         if (preg_match('/^\d{3,4}p$/', $token)) {
             return true;
         }
@@ -207,6 +214,14 @@ class FilenameParser
         }
 
         return false;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function defaultRemovableTokens(): array
+    {
+        return self::REMOVABLE_TOKENS;
     }
 
     private function formatToken(string $token): string

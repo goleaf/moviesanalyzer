@@ -7,7 +7,11 @@ return [
         'path' => env('SMB_PATH', 'Movies'),
         'username' => env('SMB_USERNAME', ''),
         'password' => env('SMB_PASSWORD', ''),
+        'backend' => env('SMB_BACKEND', 'auto'),
+        'workgroup' => env('SMB_WORKGROUP', ''),
         'binary' => env('SMBCLIENT_BIN', 'smbclient'),
+        'config_file' => env('SMBCLIENT_CONFIG_FILE', ''),
+        'timeout_seconds' => (int) env('SMB_TIMEOUT_SECONDS', 180),
         'video_extensions' => [
             'mkv',
             'mp4',
@@ -34,12 +38,22 @@ return [
         'match_threshold' => (float) env('TMDB_MATCH_THRESHOLD', 0.75),
         'uncertain_threshold' => (float) env('TMDB_UNCERTAIN_THRESHOLD', 0.55),
     ],
+    'google_assist' => [
+        'endpoint' => env('GOOGLE_CSE_ENDPOINT', 'https://www.googleapis.com/customsearch/v1'),
+        'api_key' => env('GOOGLE_CSE_API_KEY', ''),
+        'cx' => env('GOOGLE_CSE_CX', ''),
+        'cache_days' => (int) env('GOOGLE_ASSIST_CACHE_DAYS', 2),
+        'max_results' => (int) env('GOOGLE_ASSIST_MAX_RESULTS', 8),
+        'max_title_suggestions' => (int) env('GOOGLE_ASSIST_MAX_TITLE_SUGGESTIONS', 6),
+        'max_suggestion_queries' => (int) env('GOOGLE_ASSIST_MAX_SUGGESTION_QUERIES', 3),
+        'max_tmdb_candidates' => (int) env('GOOGLE_ASSIST_MAX_TMDB_CANDIDATES', 15),
+    ],
     'scan' => [
         'progress_cache_key' => 'cineclean.scan.progress',
         'start_flag_cache_key' => 'cineclean.scan.requested',
         'cache_ttl_minutes' => 360,
     ],
     'files' => [
-        'allow_delete' => (bool) env('CINECLEAN_ALLOW_DELETE', false),
+        'allow_delete' => (bool) env('MOVIESANALYZER_ALLOW_DELETE', env('CINECLEAN_ALLOW_DELETE', false)),
     ],
 ];

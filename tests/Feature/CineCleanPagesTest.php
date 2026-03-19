@@ -18,7 +18,7 @@ it('renders the dashboard', function (): void {
 
     $this->get(route('cineclean.dashboard'))
         ->assertSuccessful()
-        ->assertSee('CINECLEAN')
+        ->assertSee('MOVIESANALYZER')
         ->assertSee('SCAN LIBRARY');
 });
 

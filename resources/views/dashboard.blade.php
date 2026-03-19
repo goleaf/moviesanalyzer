@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'CineClean Dashboard')
+@section('title', 'moviesanalyzer Dashboard')
 
 @section('content')
     <section class="space-y-6">
@@ -90,9 +90,9 @@
 
                 if (payload.finished === true) {
                     if (payload.status === 'failed') {
-                        window.CineClean.toast(payload.error || 'Scan failed.', 'error');
+                        window.MoviesAnalyzer.toast(payload.error || 'Scan failed.', 'error');
                     } else {
-                        window.CineClean.toast('Scan finished. Redirecting to duplicates...', 'success');
+                        window.MoviesAnalyzer.toast('Scan finished. Redirecting to duplicates...', 'success');
                         setTimeout(() => window.location.href = @json(route('cineclean.duplicates.index')), 1200);
                     }
 
@@ -117,7 +117,7 @@
                     }
                 });
                 stream.onerror = () => {
-                    window.CineClean.toast('Progress stream disconnected.', 'error');
+                    window.MoviesAnalyzer.toast('Progress stream disconnected.', 'error');
                 };
             };
 

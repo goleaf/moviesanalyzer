@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'All Movies · CineClean')
+@section('title', 'All Movies · moviesanalyzer')
 
 @section('content')
     <section class="space-y-6">

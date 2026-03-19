@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'CineClean')</title>
+    <title>@yield('title', 'moviesanalyzer')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -77,7 +77,7 @@
 <div class="min-h-screen flex">
     <aside class="w-72 border-r border-cine bg-black/30 backdrop-blur-md p-6 hidden lg:flex flex-col gap-8">
         <div>
-            <p class="font-cinema text-3xl tracking-wide" style="color: var(--gold);">CINECLEAN</p>
+            <p class="font-cinema text-3xl tracking-wide" style="color: var(--gold);">MOVIESANALYZER</p>
             <p class="text-sm text-muted mt-1">Movie library deduplication</p>
         </div>
 
@@ -89,6 +89,7 @@
             </a>
             <a href="{{ route('cineclean.movies.index') }}" class="block px-4 py-3 rounded-xl border border-transparent transition {{ request()->routeIs('cineclean.movies.*') ? 'link-active' : 'hover:border-cine hover:bg-white/5' }}">All Movies</a>
             <a href="{{ route('cineclean.unmatched.index') }}" class="block px-4 py-3 rounded-xl border border-transparent transition {{ request()->routeIs('cineclean.unmatched.*') ? 'link-active' : 'hover:border-cine hover:bg-white/5' }}">Unmatched</a>
+            <a href="{{ route('cineclean.rules.index') }}" class="block px-4 py-3 rounded-xl border border-transparent transition {{ request()->routeIs('cineclean.rules.*') ? 'link-active' : 'hover:border-cine hover:bg-white/5' }}">Parser Rules</a>
         </nav>
 
         <p class="text-xs text-muted mt-auto">No files are deleted automatically. Deletion is manual and always confirmed.</p>
@@ -97,7 +98,7 @@
     <main class="flex-1 p-4 md:p-8">
         <header class="mb-8 flex items-center justify-between gap-4">
             <div>
-                <p class="font-cinema text-4xl md:text-5xl leading-none" style="color: var(--gold);">CINECLEAN</p>
+                <p class="font-cinema text-4xl md:text-5xl leading-none" style="color: var(--gold);">MOVIESANALYZER</p>
                 <p class="text-muted mt-2">Review duplicates before any delete action.</p>
             </div>
             <a href="{{ route('cineclean.dashboard') }}" class="lg:hidden rounded-lg px-4 py-2 border border-cine bg-card text-sm">Menu Home</a>
@@ -116,7 +117,7 @@
 <div id="toast" class="fixed bottom-6 right-6 hidden z-50"></div>
 
 <script>
-    window.CineClean = {
+    window.MoviesAnalyzer = {
         csrf: document.querySelector('meta[name="csrf-token"]').content,
         formatBytes(bytes) {
             if (bytes < 1024) {

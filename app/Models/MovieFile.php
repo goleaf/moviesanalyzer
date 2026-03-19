@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\MatchStatus;
+use Database\Factories\MovieFileFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MovieFile extends Model
 {
-    /** @use HasFactory<\Database\Factories\MovieFileFactory> */
+    /** @use HasFactory<MovieFileFactory> */
     use HasFactory;
 
     /**
@@ -21,6 +22,10 @@ class MovieFile extends Model
         'filename',
         'file_size_bytes',
         'extension',
+        'parsed_base_name',
+        'parsed_clean_title',
+        'parsed_search_queries',
+        'parsed_release_year',
         'tmdb_id',
         'tmdb_title',
         'tmdb_original_title',
@@ -41,6 +46,8 @@ class MovieFile extends Model
     {
         return [
             'file_size_bytes' => 'integer',
+            'parsed_search_queries' => 'array',
+            'parsed_release_year' => 'integer',
             'tmdb_id' => 'integer',
             'tmdb_year' => 'integer',
             'tmdb_vote_average' => 'float',
@@ -96,6 +103,7 @@ class MovieFile extends Model
             $builder
                 ->where('tmdb_title', 'like', "%{$search}%")
                 ->orWhere('tmdb_original_title', 'like', "%{$search}%")
+                ->orWhere('parsed_clean_title', 'like', "%{$search}%")
                 ->orWhere('filename', 'like', "%{$search}%");
         });
     }

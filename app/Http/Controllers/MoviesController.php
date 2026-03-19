@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\RescanUnmatchedMoviesAction;
 use App\Enums\MatchStatus;
+use App\Http\Requests\ManualGoogleAssistRequest;
 use App\Http\Requests\ManualMatchRequest;
 use App\Http\Requests\ManualTmdbSearchRequest;
+use App\Http\Requests\RescanUnmatchedRequest;
 use App\Http\Requests\SkipMovieRequest;
 use App\Models\MovieFile;
+use App\Services\GoogleMovieResearchService;
 use App\Services\MovieLibraryService;
 use App\Services\TmdbService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class MoviesController extends Controller
 {
-    public function __construct(public MovieLibraryService $movieLibraryService)
-    {
-    }
+    public function __construct(public MovieLibraryService $movieLibraryService) {}
 
     public function index(Request $request): View
     {
@@ -42,6 +45,7 @@ class MoviesController extends Controller
                 'filename',
                 'file_size_bytes',
                 'extension',
+                'parsed_clean_title',
                 'tmdb_id',
                 'match_status',
                 'match_confidence',
@@ -49,12 +53,37 @@ class MoviesController extends Controller
             ])
             ->unmatched()
             ->orderByDesc('scanned_at')
-            ->paginate(50)
-            ->withQueryString();
+            ->orderBy('id')
+            ->get();
 
         return view('movies.unmatched', [
             'files' => $files,
         ]);
+    }
+
+    public function rescanUnmatched(
+        RescanUnmatchedRequest $request,
+        RescanUnmatchedMoviesAction $rescanUnmatchedMoviesAction,
+    ): RedirectResponse|JsonResponse {
+        $result = $rescanUnmatchedMoviesAction->handle();
+
+        if ($request->expectsJson()) {
+            return response()->json($result);
+        }
+
+        return redirect()
+            ->route('cineclean.unmatched.index')
+            ->with(
+                'status',
+                sprintf(
+                    'Rescan complete. Processed %d files: matched %d, uncertain %d, unmatched %d, failed %d.',
+                    $result['processed'],
+                    $result['matched'],
+                    $result['uncertain'],
+                    $result['unmatched'],
+                    $result['failed'],
+                ),
+            );
     }
 
     public function searchManual(
@@ -68,6 +97,19 @@ class MoviesController extends Controller
             'movie_file_id' => $movieFile->id,
             'data' => $tmdbService->searchCandidates($query),
         ]);
+    }
+
+    public function googleAssist(
+        ManualGoogleAssistRequest $request,
+        MovieFile $movieFile,
+        GoogleMovieResearchService $googleMovieResearchService,
+    ): JsonResponse {
+        return response()->json(
+            $googleMovieResearchService->research(
+                filename: $movieFile->filename,
+                queryOverride: $request->string('query')->toString(),
+            ),
+        );
     }
 
     public function applyManualMatch(
