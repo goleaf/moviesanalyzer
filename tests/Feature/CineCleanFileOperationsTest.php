@@ -98,7 +98,8 @@ it('searches and applies manual tmdb matches for unmatched files', function (): 
 
     expect($movieFile->match_status->value)->toBe('matched')
         ->and($movieFile->tmdb_id)->toBe(603)
-        ->and($movieFile->tmdb_title)->toBe('The Matrix');
+        ->and($movieFile->tmdb_title)->toBe('The Matrix')
+        ->and($movieFile->movie_year)->toBe(1999);
 });
 
 it('marks unmatched files as skipped when user chooses skip', function (): void {
@@ -202,6 +203,7 @@ it('rescans all unmatched files with current parser rules and updates matches', 
     expect($movieFile->match_status)->toBe(MatchStatus::Matched)
         ->and($movieFile->parsed_clean_title)->toBe('The Matrix')
         ->and($movieFile->tmdb_id)->toBe(603)
+        ->and($movieFile->movie_year)->toBe(1999)
         ->and(
             ScanLog::query()
                 ->where('notes', 'like', 'rescan_unmatched:%')

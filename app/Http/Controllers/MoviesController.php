@@ -130,6 +130,7 @@ class MoviesController extends Controller
             'tmdb_title' => $movie['title'],
             'tmdb_original_title' => $movie['original_title'],
             'tmdb_year' => $movie['release_year'],
+            'movie_year' => $movie['release_year'],
             'tmdb_poster_path' => $movie['poster_path'],
             'tmdb_overview' => $movie['overview'],
             'tmdb_vote_average' => $movie['vote_average'],

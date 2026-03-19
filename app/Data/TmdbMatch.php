@@ -17,8 +17,7 @@ class TmdbMatch
         public readonly ?string $overview = null,
         public readonly ?float $voteAverage = null,
         public readonly ?string $tmdbUrl = null,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<string, mixed>  $movie
@@ -54,6 +53,7 @@ class TmdbMatch
             'tmdb_title' => $this->title,
             'tmdb_original_title' => $this->originalTitle,
             'tmdb_year' => $this->releaseYear,
+            'movie_year' => $this->releaseYear,
             'tmdb_poster_path' => $this->posterPath,
             'tmdb_overview' => $this->overview,
             'tmdb_vote_average' => $this->voteAverage,

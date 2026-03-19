@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Http;
 
 class TmdbService
 {
+    private const FALLBACK_LANGUAGE = 'en-US';
+
     /**
      * @var array<int, float>
      */
@@ -19,13 +21,14 @@ class TmdbService
     public function match(ParsedFilename $parsedFilename): TmdbMatch
     {
         $candidates = collect();
+        $preferredLanguage = $this->preferredLanguage();
 
         foreach ($parsedFilename->searchQueries as $query) {
-            $englishResults = $this->searchMovie($query, 'en-US');
-            $candidates = $candidates->merge($englishResults);
+            $primaryResults = $this->searchMovie($query, $preferredLanguage);
+            $candidates = $candidates->merge($primaryResults);
 
-            if ($englishResults === [] || preg_match('/\p{Cyrillic}/u', $query) === 1) {
-                $candidates = $candidates->merge($this->searchMovie($query, 'ru-RU'));
+            if ($primaryResults === [] && $preferredLanguage !== self::FALLBACK_LANGUAGE) {
+                $candidates = $candidates->merge($this->searchMovie($query, self::FALLBACK_LANGUAGE));
             }
         }
 
@@ -56,13 +59,14 @@ class TmdbService
 
         $matchThreshold = (float) config('cineclean.tmdb.match_threshold', 0.75);
         $uncertainThreshold = (float) config('cineclean.tmdb.uncertain_threshold', 0.55);
+        $localizedBestCandidate = $this->localizeCandidate($bestCandidate, $preferredLanguage);
 
         if ($bestConfidence >= $matchThreshold) {
-            return TmdbMatch::fromMovie($bestCandidate, MatchStatus::Matched, $bestConfidence);
+            return TmdbMatch::fromMovie($localizedBestCandidate, MatchStatus::Matched, $bestConfidence);
         }
 
         if ($bestConfidence >= $uncertainThreshold) {
-            return TmdbMatch::fromMovie($bestCandidate, MatchStatus::Uncertain, $bestConfidence);
+            return TmdbMatch::fromMovie($localizedBestCandidate, MatchStatus::Uncertain, $bestConfidence);
         }
 
         return TmdbMatch::unmatched();
@@ -73,30 +77,32 @@ class TmdbService
      */
     public function searchCandidates(string $query): array
     {
-        $english = $this->searchMovie($query, 'en-US');
+        $preferredLanguage = $this->preferredLanguage();
+        $primary = $this->searchMovie($query, $preferredLanguage);
 
-        if ($english !== [] || preg_match('/\p{Cyrillic}/u', $query) !== 1) {
-            return $english;
+        if ($primary === [] && $preferredLanguage !== self::FALLBACK_LANGUAGE) {
+            $primary = $this->searchMovie($query, self::FALLBACK_LANGUAGE);
         }
 
-        return $this->searchMovie($query, 'ru-RU');
+        return $this->localizeCandidates($primary, $preferredLanguage);
     }
 
     /**
      * @return array<string, float|int|string|null>|null
      */
-    public function findMovieById(int $tmdbId): ?array
+    public function findMovieById(int $tmdbId, ?string $language = null): ?array
     {
-        $cacheKey = sprintf('cineclean.tmdb.movie.%d', $tmdbId);
+        $language = $language ?: $this->preferredLanguage();
+        $cacheKey = sprintf('cineclean.tmdb.movie.%s.%d', $language, $tmdbId);
         $ttl = now()->addDays((int) config('cineclean.tmdb.cache_days', 7));
 
         /** @var array<string, mixed>|null $movie */
-        $movie = Cache::remember($cacheKey, $ttl, function () use ($tmdbId): ?array {
+        $movie = Cache::remember($cacheKey, $ttl, function () use ($tmdbId, $language): ?array {
             $this->throttle();
 
             $response = $this->tmdbRequest()->get(
                 sprintf('%s/movie/%d', rtrim((string) config('cineclean.tmdb.base_url'), '/'), $tmdbId),
-                ['language' => 'en-US'],
+                ['language' => $language],
             );
 
             if (! $response->successful()) {
@@ -251,5 +257,41 @@ class TmdbService
         $confidence += min(0.1, max(0.0, $voteAverage / 100));
 
         return min(1.0, $confidence);
+    }
+
+    private function preferredLanguage(): string
+    {
+        return (string) config('cineclean.tmdb.preferred_language', 'ru-RU');
+    }
+
+    /**
+     * @param  array<string, float|int|string|null>  $candidate
+     * @return array<string, float|int|string|null>
+     */
+    private function localizeCandidate(array $candidate, string $language): array
+    {
+        if (! isset($candidate['tmdb_id'])) {
+            return $candidate;
+        }
+
+        $localized = $this->findMovieById((int) $candidate['tmdb_id'], $language);
+
+        if ($localized === null) {
+            return $candidate;
+        }
+
+        return $localized;
+    }
+
+    /**
+     * @param  array<int, array<string, float|int|string|null>>  $candidates
+     * @return array<int, array<string, float|int|string|null>>
+     */
+    private function localizeCandidates(array $candidates, string $language): array
+    {
+        return array_values(array_map(
+            fn (array $candidate): array => $this->localizeCandidate($candidate, $language),
+            $candidates,
+        ));
     }
 }

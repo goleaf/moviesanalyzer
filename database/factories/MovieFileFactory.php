@@ -19,6 +19,7 @@ class MovieFileFactory extends Factory
     public function definition(): array
     {
         $title = fake()->unique()->words(3, true);
+        $year = fake()->numberBetween(1970, 2025);
 
         return [
             'smb_path' => 'Movies/'.str_replace(' ', '.', $title).'.mkv',
@@ -28,7 +29,8 @@ class MovieFileFactory extends Factory
             'tmdb_id' => fake()->numberBetween(10, 999999),
             'tmdb_title' => ucwords($title),
             'tmdb_original_title' => ucwords($title),
-            'tmdb_year' => fake()->numberBetween(1970, 2025),
+            'tmdb_year' => $year,
+            'movie_year' => $year,
             'tmdb_poster_path' => '/'.fake()->lexify('??????????????????????').'.jpg',
             'tmdb_overview' => fake()->sentence(10),
             'tmdb_vote_average' => fake()->randomFloat(1, 4, 9),
@@ -46,6 +48,7 @@ class MovieFileFactory extends Factory
             'tmdb_title' => null,
             'tmdb_original_title' => null,
             'tmdb_year' => null,
+            'movie_year' => null,
             'tmdb_poster_path' => null,
             'tmdb_overview' => null,
             'tmdb_vote_average' => null,

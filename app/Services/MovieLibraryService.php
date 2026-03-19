@@ -6,8 +6,8 @@ use App\Enums\MatchStatus;
 use App\Models\MovieFile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator as Paginator;
+use Illuminate\Support\Collection;
 
 class MovieLibraryService
 {
@@ -65,7 +65,7 @@ class MovieLibraryService
         $files = $this->matchedQuery()
             ->search($search)
             ->orderBy('tmdb_title')
-            ->orderBy('tmdb_year')
+            ->orderBy('movie_year')
             ->get();
 
         $groups = $this->buildGroups($files, duplicatesOnly: false)->values();
@@ -99,6 +99,7 @@ class MovieLibraryService
                 'tmdb_title',
                 'tmdb_original_title',
                 'tmdb_year',
+                'movie_year',
                 'tmdb_poster_path',
                 'tmdb_overview',
                 'tmdb_vote_average',
@@ -132,7 +133,7 @@ class MovieLibraryService
                     'tmdb_id' => $primary->tmdb_id,
                     'title' => $primary->tmdb_title ?: $primary->tmdb_original_title,
                     'original_title' => $primary->tmdb_original_title,
-                    'year' => $primary->tmdb_year,
+                    'year' => $primary->movie_year ?? $primary->tmdb_year,
                     'poster_url' => $primary->tmdb_poster_url,
                     'overview' => $primary->tmdb_overview,
                     'vote_average' => $primary->tmdb_vote_average,

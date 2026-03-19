@@ -31,6 +31,7 @@ return [
     'tmdb' => [
         'api_key' => env('TMDB_API_KEY'),
         'token' => env('TMDB_TOKEN'),
+        'preferred_language' => env('TMDB_PREFERRED_LANGUAGE', 'ru-RU'),
         'base_url' => env('TMDB_BASE_URL', 'https://api.themoviedb.org/3'),
         'cache_days' => (int) env('TMDB_CACHE_DAYS', 7),
         'requests_per_window' => (int) env('TMDB_RATE_MAX_REQUESTS', 40),
