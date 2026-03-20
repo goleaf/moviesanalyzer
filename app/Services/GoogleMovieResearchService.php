@@ -4,13 +4,14 @@ namespace App\Services;
 
 use App\Data\ParsedFilename;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
+use Throwable;
 
 class GoogleMovieResearchService
 {
     public function __construct(
         private FilenameParser $filenameParser,
         private TmdbService $tmdbService,
+        private McpFetchService $mcpFetchService,
     ) {}
 
     /**
@@ -45,7 +46,7 @@ class GoogleMovieResearchService
 
         return [
             'enabled' => $this->isConfigured(),
-            'provider' => 'google_custom_search',
+            'provider' => (string) config('cineclean.google_assist.provider', 'mcp_google_fetch'),
             'query' => $query,
             'default_query' => $defaultQuery,
             'parsed_clean_title' => $parsedFilename->cleanTitle,
@@ -58,8 +59,7 @@ class GoogleMovieResearchService
 
     private function isConfigured(): bool
     {
-        return trim((string) config('cineclean.google_assist.api_key', '')) !== ''
-            && trim((string) config('cineclean.google_assist.cx', '')) !== '';
+        return $this->mcpFetchService->isConfigured();
     }
 
     private function buildDefaultQuery(ParsedFilename $parsedFilename): string
@@ -88,10 +88,14 @@ class GoogleMovieResearchService
     private function searchGoogle(string $query): array
     {
         if (! $this->isConfigured()) {
-            return [[], 'Google Assist is not configured. Set GOOGLE_CSE_API_KEY and GOOGLE_CSE_CX in .env.'];
+            return [[], 'Google Assist MCP is not configured. Set GOOGLE_ASSIST_MCP_COMMAND in .env.'];
         }
 
-        $cacheKey = sprintf('moviesanalyzer.google_assist.%s', sha1(mb_strtolower($query, 'UTF-8')));
+        $cacheKey = sprintf(
+            'moviesanalyzer.google_assist.%s.%s',
+            sha1(mb_strtolower($query, 'UTF-8')),
+            sha1((string) config('cineclean.google_assist.mcp_command', '')),
+        );
         $cacheTtlDays = max(1, (int) config('cineclean.google_assist.cache_days', 2));
 
         /** @var array{results: array<int, array{
@@ -104,51 +108,21 @@ class GoogleMovieResearchService
          * }, message: string|null} $payload
          */
         $payload = Cache::remember($cacheKey, now()->addDays($cacheTtlDays), function () use ($query): array {
-            $response = Http::acceptJson()
-                ->timeout(20)
-                ->retry(2, 250)
-                ->get((string) config('cineclean.google_assist.endpoint', 'https://www.googleapis.com/customsearch/v1'), [
-                    'key' => (string) config('cineclean.google_assist.api_key', ''),
-                    'cx' => (string) config('cineclean.google_assist.cx', ''),
-                    'q' => $query,
-                    'num' => max(1, min(10, (int) config('cineclean.google_assist.max_results', 8))),
-                ]);
-
-            if (! $response->successful()) {
+            try {
+                $document = $this->mcpFetchService->fetch($this->buildGoogleSearchUrl($query));
+            } catch (Throwable $exception) {
                 return [
                     'results' => [],
-                    'message' => sprintf('Google request failed with HTTP %d.', $response->status()),
+                    'message' => sprintf('Google MCP fetch failed: %s', $exception->getMessage()),
                 ];
             }
 
-            $items = $response->json('items');
+            $results = $this->parseGoogleResults($document);
 
-            if (! is_array($items)) {
+            if ($results === []) {
                 return [
                     'results' => [],
                     'message' => 'No Google results returned for this query.',
-                ];
-            }
-
-            $results = [];
-
-            foreach ($items as $item) {
-                if (! is_array($item)) {
-                    continue;
-                }
-
-                $title = trim((string) ($item['title'] ?? ''));
-                $snippet = trim((string) ($item['snippet'] ?? ''));
-                $link = trim((string) ($item['link'] ?? ''));
-                $displayLink = trim((string) ($item['displayLink'] ?? ''));
-
-                $results[] = [
-                    'title' => $title,
-                    'snippet' => $snippet,
-                    'link' => $link,
-                    'display_link' => $displayLink,
-                    'extracted_title' => $this->extractTitleFromText($title) ?? $this->extractTitleFromText($snippet),
-                    'tmdb_id' => $this->extractTmdbId($link),
                 ];
             }
 
@@ -159,6 +133,200 @@ class GoogleMovieResearchService
         });
 
         return [$payload['results'], $payload['message']];
+    }
+
+    private function buildGoogleSearchUrl(string $query): string
+    {
+        $baseUrl = trim((string) config('cineclean.google_assist.google_search_url', 'https://www.google.com/search'));
+        $baseUrl = $baseUrl !== '' ? $baseUrl : 'https://www.google.com/search';
+
+        $params = [
+            'q' => $query,
+            'hl' => trim((string) config('cineclean.google_assist.google_locale', 'en')) ?: 'en',
+            'safe' => trim((string) config('cineclean.google_assist.google_safe', 'off')) ?: 'off',
+            'num' => max(1, min(10, (int) config('cineclean.google_assist.max_results', 8))),
+            'gbv' => 1,
+        ];
+
+        return sprintf('%s?%s', rtrim($baseUrl, '?'), http_build_query($params, '', '&', PHP_QUERY_RFC3986));
+    }
+
+    /**
+     * @return array<int, array{
+     *     title: string,
+     *     snippet: string,
+     *     link: string,
+     *     display_link: string,
+     *     extracted_title: string|null,
+     *     tmdb_id: int|null
+     * }>
+     */
+    private function parseGoogleResults(string $document): array
+    {
+        $maxResults = max(1, min(10, (int) config('cineclean.google_assist.max_results', 8)));
+        $results = [];
+        $seenLinks = [];
+
+        foreach ($this->extractGoogleLinks($document) as $match) {
+            $normalizedUrl = $this->normalizeGoogleRedirectUrl($match['url']);
+
+            if (! $this->isSearchCandidateUrl($normalizedUrl)) {
+                continue;
+            }
+
+            $linkKey = mb_strtolower($normalizedUrl, 'UTF-8');
+
+            if (isset($seenLinks[$linkKey])) {
+                continue;
+            }
+
+            $seenLinks[$linkKey] = true;
+
+            $title = $this->sanitizeText($match['title']);
+            $snippet = $this->extractSnippet($document, $match['offset'], $title, $normalizedUrl);
+            $displayLink = trim((string) parse_url($normalizedUrl, PHP_URL_HOST));
+
+            $results[] = [
+                'title' => $title !== '' ? $title : $displayLink,
+                'snippet' => $snippet,
+                'link' => $normalizedUrl,
+                'display_link' => $displayLink,
+                'extracted_title' => $this->extractTitleFromText($title) ?? $this->extractTitleFromText($snippet),
+                'tmdb_id' => $this->extractTmdbId($normalizedUrl),
+            ];
+
+            if (count($results) >= $maxResults) {
+                break;
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * @return array<int, array{title: string, url: string, offset: int}>
+     */
+    private function extractGoogleLinks(string $document): array
+    {
+        $matches = [];
+
+        if (preg_match_all('/\[(?<title>[^\]]+)\]\((?<url>https?:\/\/[^\s\)]+)\)/u', $document, $markdownLinks, PREG_SET_ORDER | PREG_OFFSET_CAPTURE) === false) {
+            return [];
+        }
+
+        foreach ($markdownLinks as $entry) {
+            $title = trim((string) ($entry['title'][0] ?? ''));
+            $url = trim((string) ($entry['url'][0] ?? ''));
+            $offset = (int) ($entry['url'][1] ?? 0);
+
+            if ($url === '') {
+                continue;
+            }
+
+            $matches[] = [
+                'title' => $title,
+                'url' => $url,
+                'offset' => $offset,
+            ];
+        }
+
+        if (preg_match_all('/https?:\/\/[^\s<>"\)]+/u', $document, $rawLinks, PREG_OFFSET_CAPTURE) === false) {
+            return $matches;
+        }
+
+        foreach ($rawLinks[0] as $entry) {
+            $url = trim((string) ($entry[0] ?? ''));
+            $offset = (int) ($entry[1] ?? 0);
+
+            if ($url === '') {
+                continue;
+            }
+
+            $matches[] = [
+                'title' => $url,
+                'url' => $url,
+                'offset' => $offset,
+            ];
+        }
+
+        return $matches;
+    }
+
+    private function normalizeGoogleRedirectUrl(string $url): string
+    {
+        $normalized = trim($url);
+        $host = trim((string) parse_url($normalized, PHP_URL_HOST));
+        $path = trim((string) parse_url($normalized, PHP_URL_PATH));
+
+        if ($host === '' || ! str_contains(mb_strtolower($host, 'UTF-8'), 'google.')) {
+            return $normalized;
+        }
+
+        if (! in_array($path, ['/url', '/imgres'], true)) {
+            return $normalized;
+        }
+
+        $query = trim((string) parse_url($normalized, PHP_URL_QUERY));
+
+        if ($query === '') {
+            return $normalized;
+        }
+
+        parse_str($query, $params);
+        $redirect = trim((string) ($params['url'] ?? $params['q'] ?? ''));
+
+        if ($redirect === '' || ! filter_var($redirect, FILTER_VALIDATE_URL)) {
+            return $normalized;
+        }
+
+        return $redirect;
+    }
+
+    private function isSearchCandidateUrl(string $url): bool
+    {
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            return false;
+        }
+
+        $host = mb_strtolower(trim((string) parse_url($url, PHP_URL_HOST)), 'UTF-8');
+
+        if ($host === '') {
+            return false;
+        }
+
+        $blockedHosts = [
+            'google.com',
+            'www.google.com',
+            'support.google.com',
+            'accounts.google.com',
+            'policies.google.com',
+            'webcache.googleusercontent.com',
+        ];
+
+        if (in_array($host, $blockedHosts, true)) {
+            return false;
+        }
+
+        return ! str_starts_with($host, 'maps.google.');
+    }
+
+    private function extractSnippet(string $document, int $offset, string $title, string $url): string
+    {
+        $start = max(0, $offset - 140);
+        $window = mb_substr($document, $start, 320, 'UTF-8');
+        $window = preg_replace('/\[[^\]]+]\((https?:\/\/[^\s\)]+)\)/u', ' ', $window) ?? $window;
+        $window = str_replace([$title, $url], ' ', $window);
+
+        return mb_substr($this->sanitizeText($window), 0, 220, 'UTF-8');
+    }
+
+    private function sanitizeText(string $value): string
+    {
+        $cleaned = html_entity_decode($value, ENT_QUOTES | ENT_HTML5);
+        $cleaned = strip_tags($cleaned);
+        $cleaned = trim(preg_replace('/\s+/u', ' ', $cleaned) ?? $cleaned);
+
+        return trim($cleaned, " \t\n\r\0\x0B-_|:,.\"'[]()");
     }
 
     /**

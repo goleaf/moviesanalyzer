@@ -6,16 +6,18 @@
     <section class="space-y-6">
         <div class="card p-4 md:p-6">
             <h2 class="font-cinema text-3xl">Unmatched Movies</h2>
-            <p class="text-muted mt-1 text-sm">Use Google Assist to research titles, then confirm TMDB match manually.</p>
+            <p class="text-muted mt-1 text-sm">Use Google MCP Assist to research titles, then confirm TMDB match manually.</p>
             <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <p class="text-xs text-muted uppercase tracking-wide">Total unmatched: {{ $files->count() }}</p>
-                <form method="POST" action="{{ route('cineclean.unmatched.rescan') }}">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 rounded-lg border border-amber-500/40 bg-amber-900/20 hover:bg-amber-800/30 text-xs md:text-sm">
-                        Rescan Unmatched (Use Parser Rules)
-                    </button>
-                </form>
+                <p id="unmatched-total" class="text-xs text-muted uppercase tracking-wide">Total unmatched: {{ $files->count() }}</p>
+                <button
+                    id="refresh-all-one-by-one"
+                    type="button"
+                    class="px-4 py-2 rounded-lg border border-amber-500/40 bg-amber-900/20 hover:bg-amber-800/30 text-xs md:text-sm"
+                >
+                    Refresh All One-by-One
+                </button>
             </div>
+            <p id="refresh-all-status" class="mt-2 text-xs text-muted"></p>
         </div>
 
         <div class="card overflow-x-auto">
@@ -40,6 +42,14 @@
                             <div class="flex justify-end gap-2">
                                 <button
                                     type="button"
+                                    class="refresh-one px-3 py-1.5 text-xs rounded-lg border border-cine bg-card hover:bg-white/5"
+                                    data-id="{{ $file->id }}"
+                                    data-refresh-url="{{ route('cineclean.unmatched.refresh', $file) }}"
+                                >
+                                    Refresh
+                                </button>
+                                <button
+                                    type="button"
                                     class="google-assist px-3 py-1.5 text-xs rounded-lg border border-amber-500/40 bg-amber-900/20 hover:bg-amber-800/30"
                                     data-id="{{ $file->id }}"
                                     data-search-url="{{ route('cineclean.unmatched.search', $file) }}"
@@ -48,7 +58,7 @@
                                     data-filename="{{ $file->filename }}"
                                     data-clean-title="{{ $file->parsed_clean_title }}"
                                 >
-                                    Google Assist
+                                    Google MCP
                                 </button>
                                 <button
                                     type="button"
@@ -109,6 +119,9 @@
             const closeButton = document.getElementById('manual-close');
             const googleResultsEl = document.getElementById('google-results');
             const resultsEl = document.getElementById('manual-results');
+            const refreshAllButton = document.getElementById('refresh-all-one-by-one');
+            const refreshAllStatus = document.getElementById('refresh-all-status');
+            const unmatchedTotal = document.getElementById('unmatched-total');
             let activeContext = null;
 
             const guessTitle = (filename) => filename
@@ -132,7 +145,19 @@
 
                 row.style.transition = 'opacity .3s ease';
                 row.style.opacity = '0';
-                setTimeout(() => row.remove(), 300);
+                setTimeout(() => {
+                    row.remove();
+                    updateUnmatchedCounter();
+                }, 300);
+            };
+
+            const updateUnmatchedCounter = () => {
+                if (!unmatchedTotal) {
+                    return;
+                }
+
+                const count = document.querySelectorAll('[data-unmatched-row]').length;
+                unmatchedTotal.textContent = `Total unmatched: ${count}`;
             };
 
             const escapeHtml = (value) => String(value ?? '')
@@ -155,6 +180,53 @@
                 return '#';
             };
 
+            const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+            const refreshMovie = async (button, quiet = false) => {
+                const initialText = button.textContent;
+                button.disabled = true;
+                button.textContent = 'Refreshing...';
+
+                try {
+                    const response = await fetch(button.dataset.refreshUrl, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': window.MoviesAnalyzer.csrf,
+                            'Accept': 'application/json',
+                        },
+                    });
+
+                    const payload = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(payload.message || payload.error || 'Refresh failed.');
+                    }
+
+                    if (payload.status === 'matched') {
+                        removeRow(button.dataset.id);
+                    }
+
+                    if (!quiet) {
+                        if (payload.status === 'matched') {
+                            window.MoviesAnalyzer.toast('Movie matched and moved out of unmatched list.', 'success');
+                        } else if (payload.status === 'failed') {
+                            throw new Error(payload.error || 'Refresh failed.');
+                        } else if (payload.status === 'uncertain') {
+                            window.MoviesAnalyzer.toast('Movie refreshed with uncertain match.', 'info');
+                        } else {
+                            window.MoviesAnalyzer.toast('Movie refreshed but remains unmatched.', 'info');
+                        }
+                    }
+
+                    return payload;
+                } finally {
+                    if (button.isConnected) {
+                        button.disabled = false;
+                        button.textContent = initialText;
+                    }
+                }
+            };
+
             const openModal = (button, autoAssist) => {
                 activeContext = {
                     id: button.dataset.id,
@@ -164,7 +236,7 @@
                 };
 
                 queryInput.value = button.dataset.cleanTitle || guessTitle(button.dataset.filename || '');
-                googleResultsEl.innerHTML = '<p class="text-muted">Use Google Research to fetch title hints from web results.</p>';
+                googleResultsEl.innerHTML = '<p class="text-muted">Use Google MCP Research to fetch title hints from web results.</p>';
                 resultsEl.innerHTML = '<p class="text-muted">Search TMDB manually or use Google suggestions first.</p>';
                 modal.classList.remove('hidden');
 
@@ -314,7 +386,7 @@
                     return;
                 }
 
-                googleResultsEl.innerHTML = '<p class="text-muted">Running Google research...</p>';
+                googleResultsEl.innerHTML = '<p class="text-muted">Running Google MCP research...</p>';
 
                 const response = await fetch(activeContext.assistUrl, {
                     method: 'POST',
@@ -341,6 +413,16 @@
 
             document.querySelectorAll('.google-assist').forEach((button) => {
                 button.addEventListener('click', () => openModal(button, true));
+            });
+
+            document.querySelectorAll('.refresh-one').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    try {
+                        await refreshMovie(button);
+                    } catch (error) {
+                        window.MoviesAnalyzer.toast(error.message || 'Refresh failed.', 'error');
+                    }
+                });
             });
 
             document.querySelectorAll('.manual-skip').forEach((button) => {
@@ -384,6 +466,55 @@
                     googleResultsEl.innerHTML = '<p class="text-red-300">Google research failed.</p>';
                     window.MoviesAnalyzer.toast(error.message || 'Google research failed.', 'error');
                 }
+            });
+
+            refreshAllButton.addEventListener('click', async () => {
+                const buttons = Array.from(document.querySelectorAll('.refresh-one'));
+
+                if (buttons.length === 0) {
+                    window.MoviesAnalyzer.toast('No unmatched movies to refresh.', 'info');
+                    return;
+                }
+
+                refreshAllButton.disabled = true;
+                refreshAllStatus.textContent = `Refreshing 0/${buttons.length}...`;
+
+                let processed = 0;
+                let matched = 0;
+                let uncertain = 0;
+                let unmatched = 0;
+                let failed = 0;
+
+                for (const button of buttons) {
+                    if (!button.isConnected) {
+                        continue;
+                    }
+
+                    processed++;
+                    refreshAllStatus.textContent = `Refreshing ${processed}/${buttons.length}...`;
+
+                    try {
+                        const payload = await refreshMovie(button, true);
+
+                        if (payload.status === 'matched') {
+                            matched++;
+                        } else if (payload.status === 'uncertain') {
+                            uncertain++;
+                        } else if (payload.status === 'failed') {
+                            failed++;
+                        } else {
+                            unmatched++;
+                        }
+                    } catch (error) {
+                        failed++;
+                    }
+
+                    await wait(160);
+                }
+
+                refreshAllButton.disabled = false;
+                refreshAllStatus.textContent = `Done. Matched ${matched}, uncertain ${uncertain}, still unmatched ${unmatched}, failed ${failed}.`;
+                window.MoviesAnalyzer.toast(`Refresh complete: matched ${matched}, uncertain ${uncertain}, unmatched ${unmatched}, failed ${failed}.`, failed > 0 ? 'error' : 'success');
             });
         })();
     </script>

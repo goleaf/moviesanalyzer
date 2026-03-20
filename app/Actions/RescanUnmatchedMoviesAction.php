@@ -2,21 +2,14 @@
 
 namespace App\Actions;
 
-use App\Data\ParsedFilename;
-use App\Data\TmdbMatch;
 use App\Enums\MatchStatus;
 use App\Models\MovieFile;
 use App\Models\ScanLog;
-use App\Services\FilenameParser;
-use App\Services\TmdbService;
-use Illuminate\Support\Facades\Log;
-use Throwable;
 
 class RescanUnmatchedMoviesAction
 {
     public function __construct(
-        private FilenameParser $filenameParser,
-        private TmdbService $tmdbService,
+        private RescanMovieFileAction $rescanMovieFileAction,
     ) {}
 
     /**
@@ -48,47 +41,17 @@ class RescanUnmatchedMoviesAction
                 &$failed,
             ): void {
                 $processed++;
-                $fallbackBaseName = pathinfo($movieFile->filename, PATHINFO_FILENAME);
-                $parsedFilename = new ParsedFilename(
-                    originalFilename: $movieFile->filename,
-                    baseName: $fallbackBaseName,
-                    cleanTitle: $fallbackBaseName,
-                    releaseYear: null,
-                    searchQueries: [$fallbackBaseName],
-                );
-                $match = TmdbMatch::unmatched();
+                $result = $this->rescanMovieFileAction->handle($movieFile);
 
-                try {
-                    $parsedFilename = $this->filenameParser->parse($movieFile->filename);
-                    $match = $this->tmdbService->match($parsedFilename);
-                } catch (Throwable $exception) {
-                    $failed++;
-
-                    Log::warning('Failed to rescan unmatched movie file', [
-                        'movie_file_id' => $movieFile->id,
-                        'file' => $movieFile->filename,
-                        'error' => $exception->getMessage(),
-                    ]);
-                }
-
-                if ($match->status === MatchStatus::Matched) {
+                if ($result['status'] === MatchStatus::Matched->value) {
                     $matched++;
-                } elseif ($match->status === MatchStatus::Uncertain) {
+                } elseif ($result['status'] === MatchStatus::Uncertain->value) {
                     $uncertain++;
+                } elseif ($result['failed']) {
+                    $failed++;
                 } else {
                     $unmatched++;
                 }
-
-                MovieFile::query()
-                    ->whereKey($movieFile->id)
-                    ->update([
-                        'parsed_base_name' => $parsedFilename->baseName,
-                        'parsed_clean_title' => $parsedFilename->cleanTitle,
-                        'parsed_search_queries' => $parsedFilename->searchQueries,
-                        'parsed_release_year' => $parsedFilename->releaseYear,
-                        'scanned_at' => now(),
-                        ...$match->toDatabaseAttributes(),
-                    ]);
             });
 
         ScanLog::query()->create([

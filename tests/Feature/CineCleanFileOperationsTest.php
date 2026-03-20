@@ -136,7 +136,7 @@ it('runs google assist research for unmatched files and returns tmdb candidates 
         ->with('Matrix.Ultimate.Cut.1999.HDRip.mkv', 'matrix 1999 movie')
         ->andReturn([
             'enabled' => true,
-            'provider' => 'google_custom_search',
+            'provider' => 'mcp_google_fetch',
             'query' => 'matrix 1999 movie',
             'default_query' => 'Matrix movie',
             'parsed_clean_title' => 'Matrix',
@@ -209,4 +209,46 @@ it('rescans all unmatched files with current parser rules and updates matches', 
                 ->where('notes', 'like', 'rescan_unmatched:%')
                 ->exists()
         )->toBeTrue();
+});
+
+it('rescans one unmatched file from the page and returns status payload', function (): void {
+    $movieFile = MovieFile::query()->create([
+        'smb_path' => 'Movies/The.Matrix.1999.1080p.BluRay.x264.mkv',
+        'filename' => 'The.Matrix.1999.1080p.BluRay.x264.mkv',
+        'file_size_bytes' => 1_500_000_000,
+        'extension' => 'mkv',
+        'match_status' => MatchStatus::Unmatched,
+        'scanned_at' => now()->subDay(),
+    ]);
+
+    $tmdbService = Mockery::mock(TmdbService::class);
+    $tmdbService->shouldReceive('match')
+        ->once()
+        ->with(Mockery::type(ParsedFilename::class))
+        ->andReturn(TmdbMatch::fromMovie([
+            'tmdb_id' => 603,
+            'title' => 'The Matrix',
+            'original_title' => 'The Matrix',
+            'release_year' => 1999,
+            'poster_path' => '/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg',
+            'overview' => 'A hacker discovers reality is a simulation.',
+            'vote_average' => 8.2,
+            'tmdb_url' => 'https://www.themoviedb.org/movie/603',
+        ], MatchStatus::Matched, 0.99));
+
+    $this->app->instance(TmdbService::class, $tmdbService);
+
+    $this->postJson(route('cineclean.unmatched.refresh', $movieFile))
+        ->assertSuccessful()
+        ->assertJsonPath('movie_file_id', $movieFile->id)
+        ->assertJsonPath('status', 'matched')
+        ->assertJsonPath('tmdb_id', 603)
+        ->assertJsonPath('tmdb_title', 'The Matrix')
+        ->assertJsonPath('failed', false);
+
+    $movieFile->refresh();
+
+    expect($movieFile->match_status)->toBe(MatchStatus::Matched)
+        ->and($movieFile->parsed_clean_title)->toBe('The Matrix')
+        ->and($movieFile->tmdb_id)->toBe(603);
 });

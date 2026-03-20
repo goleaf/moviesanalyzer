@@ -9,6 +9,7 @@ It scans movie files on your NAS, matches them against TMDB, groups duplicates b
 - Composer
 - SQLite (default) or MySQL
 - `smbclient` installed
+- A free MCP fetch server command for Google research (default: `uvx mcp-server-fetch`)
 
 Install `smbclient`:
 
@@ -55,6 +56,18 @@ MOVIESANALYZER_ALLOW_DELETE=false
 If `smbclient` reports `Can't load ... smb.conf`, set `SMBCLIENT_CONFIG_FILE=/dev/null` or a valid `smb.conf` path.
 `SMB_BACKEND=auto` uses `icewind/smb` first, then falls back to CLI.
 For Homebrew/macOS reliability, set `SMB_BACKEND=cli`.
+
+Google research for unmatched titles uses MCP (no Google API keys). Default `.env` values:
+
+```env
+GOOGLE_ASSIST_PROVIDER=mcp_google_fetch
+GOOGLE_ASSIST_MCP_COMMAND="uvx mcp-server-fetch"
+GOOGLE_ASSIST_MCP_TOOL=fetch
+GOOGLE_ASSIST_MCP_TIMEOUT_SECONDS=25
+GOOGLE_ASSIST_MCP_MAX_LENGTH=18000
+GOOGLE_ASSIST_MCP_UV_CACHE_DIR=/tmp/moviesanalyzer-mcp-uv-cache
+GOOGLE_ASSIST_GOOGLE_SEARCH_URL=https://www.google.com/search
+```
 
 ## CLI Scan
 

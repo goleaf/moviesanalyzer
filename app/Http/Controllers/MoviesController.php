@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\RescanMovieFileAction;
 use App\Actions\RescanUnmatchedMoviesAction;
 use App\Enums\MatchStatus;
 use App\Http\Requests\ManualGoogleAssistRequest;
@@ -84,6 +85,16 @@ class MoviesController extends Controller
                     $result['failed'],
                 ),
             );
+    }
+
+    public function refreshUnmatchedMovie(
+        RescanUnmatchedRequest $request,
+        MovieFile $movieFile,
+        RescanMovieFileAction $rescanMovieFileAction,
+    ): JsonResponse {
+        $result = $rescanMovieFileAction->handle($movieFile);
+
+        return response()->json($result);
     }
 
     public function searchManual(
