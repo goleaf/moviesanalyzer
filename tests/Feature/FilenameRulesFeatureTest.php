@@ -3,6 +3,7 @@
 use App\Models\FilenameRule;
 use App\Services\FilenameRuleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 
 uses(RefreshDatabase::class);
 
@@ -69,4 +70,29 @@ it('previews filename parsing using stored cleanup rules', function (): void {
         ->assertSuccessful()
         ->assertJsonPath('clean_title', 'The Matrix')
         ->assertJsonPath('release_year', 1999);
+});
+
+it('renders all parser rules on a single page without pagination', function (): void {
+    foreach (range(1, 60) as $index) {
+        FilenameRule::query()->create([
+            'rule_mode' => 'remove_token',
+            'pattern' => sprintf('token-%02d', $index),
+            'replacement' => '',
+            'is_regex' => false,
+            'is_case_sensitive' => false,
+            'whole_word' => true,
+            'sort_order' => 100 + $index,
+            'is_active' => true,
+            'notes' => 'pagination check',
+        ]);
+    }
+
+    $response = $this->get(route('cineclean.rules.index'));
+
+    $response
+        ->assertSuccessful()
+        ->assertSee('token-01')
+        ->assertSee('token-60');
+
+    expect($response->viewData('rules'))->toBeInstanceOf(Collection::class);
 });

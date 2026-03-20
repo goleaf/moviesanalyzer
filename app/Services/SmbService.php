@@ -53,7 +53,7 @@ class SmbService
         $this->workgroup = trim((string) config('cineclean.smb.workgroup', ''));
         $this->binary = (string) config('cineclean.smb.binary', 'smbclient');
         $this->configFile = (string) config('cineclean.smb.config_file', '');
-        $this->timeoutSeconds = (int) config('cineclean.smb.timeout_seconds', 180);
+        $this->timeoutSeconds = $this->resolveTimeoutSeconds((int) config('cineclean.smb.timeout_seconds', 180));
         $this->videoExtensions = array_map(
             static fn (string $extension): string => mb_strtolower($extension, 'UTF-8'),
             (array) config('cineclean.smb.video_extensions', []),
@@ -286,9 +286,19 @@ class SmbService
         $process = new Process($processArguments);
 
         $process->setTimeout($this->timeoutSeconds);
+        $process->setIdleTimeout($this->timeoutSeconds);
         $process->run();
 
         if (! $process->isSuccessful()) {
+            if ($process->isTimedOut()) {
+                throw new RuntimeException(
+                    sprintf(
+                        'SMB command timed out after %d seconds. Adjust SMB_TIMEOUT_SECONDS or improve SMB response time.',
+                        $this->timeoutSeconds,
+                    ),
+                );
+            }
+
             $errorMessage = trim($process->getErrorOutput() ?: $process->getOutput());
 
             if (str_contains($errorMessage, 'Can\'t load') && str_contains($errorMessage, 'smb.conf')) {
@@ -302,6 +312,33 @@ class SmbService
         }
 
         return $process->getOutput();
+    }
+
+    private function resolveTimeoutSeconds(int $configuredTimeout): int
+    {
+        $normalizedConfiguredTimeout = $configuredTimeout > 0 ? $configuredTimeout : 180;
+        $phpMaxExecutionTime = $this->phpMaxExecutionTime();
+
+        if ($phpMaxExecutionTime === null) {
+            return $normalizedConfiguredTimeout;
+        }
+
+        $safeTimeout = max(1, $phpMaxExecutionTime - 5);
+
+        return min($normalizedConfiguredTimeout, $safeTimeout);
+    }
+
+    private function phpMaxExecutionTime(): ?int
+    {
+        $rawValue = ini_get('max_execution_time');
+
+        if (! is_string($rawValue) || trim($rawValue) === '' || ! is_numeric($rawValue)) {
+            return null;
+        }
+
+        $seconds = (int) $rawValue;
+
+        return $seconds > 0 ? $seconds : null;
     }
 
     private function resolveSmbConfigFile(): string

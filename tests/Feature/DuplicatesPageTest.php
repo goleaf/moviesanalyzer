@@ -5,7 +5,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('renders duplicate groups with client-side conflict cleanup hooks', function (): void {
+it('renders duplicate groups in livewire conflict center without confirm prompt on delete actions', function (): void {
     config()->set('cineclean.files.allow_delete', true);
 
     MovieFile::query()->create([
@@ -37,5 +37,6 @@ it('renders duplicate groups with client-side conflict cleanup hooks', function 
     $this->get(route('cineclean.duplicates.index'))
         ->assertSuccessful()
         ->assertSee('data-duplicate-group="603"', false)
-        ->assertSee('remainingRows <= 1', false);
+        ->assertDontSee('wire:confirm.prompt', false)
+        ->assertDontSee('Delete this file from SMB?', false);
 });

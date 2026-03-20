@@ -214,6 +214,122 @@ class TmdbService
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public function fetchMovieDetailsPayload(int $tmdbId, ?string $language = null): ?array
+    {
+        $this->assertProviderConfiguration();
+
+        if (! $this->shouldUseHttpProvider()) {
+            return null;
+        }
+
+        $language = $language ?: $this->preferredLanguage();
+        $appendToResponse = trim((string) config('cineclean.tmdb.details_append_to_response', ''));
+        $includeImageLanguage = trim((string) config('cineclean.tmdb.details_include_image_language', ''));
+        $cacheKey = sprintf(
+            'cineclean.tmdb.movie.payload.%s.%s.%s',
+            $language,
+            $tmdbId,
+            sha1($appendToResponse.'|'.$includeImageLanguage),
+        );
+        $ttl = now()->addDays((int) config('cineclean.tmdb.cache_days', 7));
+
+        /** @var array<string, mixed>|null $payload */
+        $payload = Cache::remember($cacheKey, $ttl, function () use (
+            $tmdbId,
+            $language,
+            $appendToResponse,
+            $includeImageLanguage,
+        ): ?array {
+            $this->throttle();
+
+            $params = [
+                'language' => $language,
+            ];
+
+            if ($appendToResponse !== '') {
+                $params['append_to_response'] = $appendToResponse;
+            }
+
+            if ($includeImageLanguage !== '') {
+                $params['include_image_language'] = $includeImageLanguage;
+            }
+
+            $response = $this->tmdbRequest()->get(
+                sprintf('%s/movie/%d', rtrim((string) config('cineclean.tmdb.base_url'), '/'), $tmdbId),
+                $params,
+            );
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $json = $response->json();
+
+            return is_array($json) ? $json : null;
+        });
+
+        return $payload;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function fetchConfigurationDetails(): array
+    {
+        if (! $this->shouldUseHttpProvider()) {
+            return [];
+        }
+
+        $cacheKey = 'cineclean.tmdb.configuration.details';
+        $ttl = now()->addDays((int) config('cineclean.tmdb.cache_days', 7));
+
+        /** @var array<string, mixed> $payload */
+        $payload = Cache::remember($cacheKey, $ttl, function (): array {
+            $this->throttle();
+
+            $response = $this->tmdbRequest()->get(
+                sprintf('%s/configuration', rtrim((string) config('cineclean.tmdb.base_url'), '/')),
+            );
+
+            if (! $response->successful()) {
+                return [];
+            }
+
+            $json = $response->json();
+
+            return is_array($json) ? $json : [];
+        });
+
+        return $payload;
+    }
+
+    public function buildImageUrl(string $filePath, string $size = 'original'): string
+    {
+        $trimmedPath = trim($filePath);
+
+        if ($trimmedPath === '') {
+            return '';
+        }
+
+        if (str_starts_with($trimmedPath, 'http://') || str_starts_with($trimmedPath, 'https://')) {
+            return $trimmedPath;
+        }
+
+        $configuration = $this->fetchConfigurationDetails();
+        $secureBaseUrl = data_get($configuration, 'images.secure_base_url');
+
+        if (! is_string($secureBaseUrl) || trim($secureBaseUrl) === '') {
+            $secureBaseUrl = 'https://image.tmdb.org/t/p/';
+        }
+
+        $normalizedPath = '/'.ltrim($trimmedPath, '/');
+
+        return rtrim($secureBaseUrl, '/').'/'.trim($size, '/').$normalizedPath;
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     private function searchMovie(string $query, string $language, ?int $year = null): array

@@ -2,16 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\MovieLibraryService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DuplicatesController extends Controller
 {
-    public function __construct(public MovieLibraryService $movieLibraryService)
-    {
-    }
-
     public function index(Request $request): View
     {
         $sort = $request->string('sort')->toString();
@@ -21,7 +16,6 @@ class DuplicatesController extends Controller
         }
 
         return view('duplicates', [
-            'groups' => $this->movieLibraryService->duplicateGroups($sort),
             'sort' => $sort,
         ]);
     }

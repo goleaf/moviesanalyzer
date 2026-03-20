@@ -207,7 +207,7 @@
                     <h3 class="font-cinema text-2xl">Existing Rules</h3>
                     <p class="text-muted text-sm">Filter and edit rules without leaving the page.</p>
                 </div>
-                <p id="visible-rules-count" class="text-xs uppercase tracking-wide text-muted">Showing {{ $rules->count() }} on this page</p>
+                <p id="visible-rules-count" class="text-xs uppercase tracking-wide text-muted">Showing {{ $rules->count() }} rules</p>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
@@ -342,9 +342,6 @@
             </div>
         </div>
 
-        <div class="card p-4">
-            {{ $rules->links() }}
-        </div>
     </section>
 @endsection
 

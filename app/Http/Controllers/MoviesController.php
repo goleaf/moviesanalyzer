@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Actions\RescanMovieFileAction;
 use App\Actions\RescanUnmatchedMoviesAction;
+use App\Actions\SyncMovieDetailsAction;
 use App\Enums\MatchStatus;
 use App\Http\Requests\ManualMatchRequest;
 use App\Http\Requests\ManualTmdbSearchRequest;
 use App\Http\Requests\RescanUnmatchedRequest;
 use App\Http\Requests\SkipMovieRequest;
+use App\Http\Requests\SyncMovieDetailsRequest;
 use App\Models\MovieFile;
 use App\Services\FilenameParser;
 use App\Services\MovieLibraryService;
@@ -28,12 +30,31 @@ class MoviesController extends Controller
 
         return view('movies.index', [
             'search' => $search,
-            'movies' => $this->movieLibraryService->movieCards(
-                search: $search,
-                page: max(1, $request->integer('page', 1)),
-                perPage: 50,
-            ),
         ]);
+    }
+
+    public function show(MovieFile $movieFile): View
+    {
+        $movie = $this->movieLibraryService->movieDetails($movieFile);
+
+        abort_if($movie === null, 404);
+
+        return view('movies.show', [
+            'movieFile' => $movieFile,
+            'movie' => $movie,
+        ]);
+    }
+
+    public function syncDetails(
+        SyncMovieDetailsRequest $request,
+        MovieFile $movieFile,
+        SyncMovieDetailsAction $syncMovieDetailsAction,
+    ): RedirectResponse {
+        $result = $syncMovieDetailsAction->handle($movieFile);
+
+        return redirect()
+            ->route('cineclean.movies.show', $movieFile)
+            ->with('status', $result['message']);
     }
 
     public function unmatched(FilenameParser $filenameParser): View

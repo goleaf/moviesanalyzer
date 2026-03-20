@@ -34,8 +34,7 @@ class FilenameRulesController extends Controller
                 'notes',
             ])
             ->ordered()
-            ->paginate(50)
-            ->withQueryString();
+            ->get();
 
         $totalRules = FilenameRule::query()->count();
         $activeRules = FilenameRule::query()->where('is_active', true)->count();

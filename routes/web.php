@@ -17,6 +17,8 @@ Route::middleware(['web'])
         Route::get('/scan/progress', [ScanController::class, 'progress'])->name('scan.progress');
 
         Route::get('/movies', [MoviesController::class, 'index'])->name('movies.index');
+        Route::get('/movies/{movieFile}', [MoviesController::class, 'show'])->name('movies.show');
+        Route::post('/movies/{movieFile}/sync-details', [MoviesController::class, 'syncDetails'])->name('movies.sync-details');
         Route::get('/duplicates', [DuplicatesController::class, 'index'])->name('duplicates.index');
         Route::get('/unmatched', [MoviesController::class, 'unmatched'])->name('unmatched.index');
         Route::post('/unmatched/rescan', [MoviesController::class, 'rescanUnmatched'])->name('unmatched.rescan');

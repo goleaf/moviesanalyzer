@@ -25,5 +25,12 @@
                 <li>+{{ collect($group['files'])->count() - 3 }} more files</li>
             @endif
         </ul>
+
+        <a
+            href="{{ route('cineclean.movies.show', $group['primary_file_id']) }}"
+            class="inline-flex items-center justify-center w-full rounded-lg border border-cine bg-black/30 px-3 py-2 text-xs uppercase tracking-wide hover:bg-white/5"
+        >
+            Open Details
+        </a>
     </div>
 </article>

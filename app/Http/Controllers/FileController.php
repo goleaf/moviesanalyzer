@@ -2,30 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\DeleteMovieFilesAction;
 use App\Http\Requests\DestroyMovieFileRequest;
 use App\Models\MovieFile;
-use App\Services\SmbService;
 use Illuminate\Http\JsonResponse;
-use Throwable;
 
 class FileController extends Controller
 {
     public function destroy(
         DestroyMovieFileRequest $request,
         MovieFile $movieFile,
-        SmbService $smbService,
+        DeleteMovieFilesAction $deleteMovieFilesAction,
     ): JsonResponse {
-        try {
-            $smbService->deleteFile($movieFile->smb_path);
-        } catch (Throwable $throwable) {
+        $result = $deleteMovieFilesAction->handle([$movieFile->id]);
+        $firstResult = $result['results'][0] ?? null;
+
+        if (! is_array($firstResult) || (($firstResult['success'] ?? false) !== true)) {
             return response()->json([
                 'deleted' => false,
-                'message' => $throwable->getMessage(),
+                'message' => is_array($firstResult) && is_string($firstResult['message'] ?? null)
+                    ? $firstResult['message']
+                    : 'Movie file deletion failed.',
             ], 422);
         }
 
         $deletedId = $movieFile->id;
-        $movieFile->delete();
 
         return response()->json([
             'deleted' => true,
