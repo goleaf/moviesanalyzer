@@ -9,6 +9,7 @@
     ],
     "license": "MIT",
     "require": {
+        "daikazu/laravel-llm-ready": "^1.2",
         "php": "^8.3",
         "icewind/smb": "^3.8",
         "laravel/framework": "^13.0",
@@ -73,6 +74,15 @@
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ]
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/daikazu/laravel-llm-ready",
+            "options": {
+                "symlink": false
+            }
+        }
+    ],
     "extra": {
         "laravel": {
             "dont-discover": []
