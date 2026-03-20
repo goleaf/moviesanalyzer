@@ -1,0 +1,1150 @@
+{
+  "version": 1,
+  "skills": {
+    "Go-to-Market-Planner": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "697691e9dbb69ecffe7e8a8575ac79dad9b36388e69456ea442706bc52c41b49"
+    },
+    "a-share-analysis": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "41c887ccf55c521e70465accec18c843523f52ece47773cdf0f05a74c78b284b"
+    },
+    "a-share-screener": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "2571ac6a2e9457216eaa8e379ec924c67f35cd05c1d7cca38102aaeef1315fee"
+    },
+    "acontext-installer": {
+      "source": "memodb-io/Acontext",
+      "sourceType": "github",
+      "computedHash": "b328fdc901f11087e0d1d5d90dfe91209f3f365e8258ab5f62ee2799b64bae27"
+    },
+    "ad-copy-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "c01ccf719e7fcb06f327a0bd74324365e00bdaa63370f9ea945d05b6410aed05"
+    },
+    "adversarial-review": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "6911481c25a589d5fe40dfaee48e4f2ddaea48d3d80585e5d57103c98e1cc3a6"
+    },
+    "agile": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "903d1363cd95223b4cf560082a8955d7709a130f193f60663e529f3a241ae220"
+    },
+    "agile-sprint-planning": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "cb69fe82f5e4b4a9c97a5eca3e1c7ebbf2d421ed87c0b5180ce53e23d9517e17"
+    },
+    "ai-slop-detector": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "80a10772b535931ab37fe00df22be77b90675a2f5074f147ed53d73df192e30f"
+    },
+    "akshare": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "9399ad62aa26a1225f82e3e2412054f620a983be6fba41d9f3827ffb66446b0d"
+    },
+    "algorithmic-art": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "6296c62bfdd4b75a965b176c6572bfc11640e242b16038adff0c655cc15d9019"
+    },
+    "analytics-interpretation": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "ac456d0fb24f200669977613be01a8db9b200d1e1300c0b58c098a7172109c7d"
+    },
+    "analytics-metrics-kpi": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "b84bd1bd613695a96e4ca1ed7259a8e2fec1838947bcb8d3ce599fd219262c5f"
+    },
+    "article-extractor": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "fc3369b15640de9af0409396aac9cc7608c3aa48f902b4a80f92f98a924a1429"
+    },
+    "artifacts-builder": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "8d69507435408416d8d8081517dddcf0a1e0e2bc8e0484863984b19ff8c6cd58"
+    },
+    "ask-questions-if-underspecified": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "6288e8e6b9a24989d73fa2151e8df7a0287c02bbb4765bbc51bc4aae599ee139"
+    },
+    "astro-cta-injector": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "4fb49f757604ba5dc31d2c3829c204c653a78c07f77beccafe33df383b855752"
+    },
+    "baby-education": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "7b5f8755350ef0edeace27e7d314255b9cf563d068f29cd645236b9bc415f0a3"
+    },
+    "backend-development": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "a6f0fe9a150a807bcc78db493b304ddff7e1de756e6087201cc3aea7e9380033"
+    },
+    "backtest-expert": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "c8063540e7b28aa316eecf57b2d808d2e55234d94cfa4db842e30103c53fd6da"
+    },
+    "been-there-done-that": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "9807e3aa9c87e6ea104f212731e8963efc4c395bc93de48489c1b8275b153043"
+    },
+    "best-practices": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "a08ad8f445b46e2f13d5f2ed222e6047ee39cf48ebab4552362e83005cfab851"
+    },
+    "blog-post-writer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "7a0da7f728f27e5056c56d052fd635cc4ca654ee77ac9a611e6a189bafef3321"
+    },
+    "brand-guidelines": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "4d84a5a0c243764982ad511537c720e7ec1930bf32876b53cc2b585a18f06db9"
+    },
+    "breadth-chart-analyst": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "75ce3e3eea936049b714eea6b29d0b0ef314372f901ba3f06851011e243aa12a"
+    },
+    "buyer-persona-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "17699682d0a9f62bbbe66b2032f8e766ee80a70483cabd89f1de08e3a917940a"
+    },
+    "canslim-screener": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "2ebe3bca72d435a6ad821fff16e089787af30e2a0274bc579c9e0b87c0996e95"
+    },
+    "canvas-design": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "1311371529daf25e8741b8fdeba9c198ceede6a2d4e75430b57effeb7cbe93b5"
+    },
+    "capture-triage": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "a4b1c97edefef590ab2776fb3d9728949bd3f941195943c1b0f3ff2a19b87432"
+    },
+    "changelog-generator": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "0facdb5c491a654e3b0f6d300fb8fa14472d811cb715c632dc2862919b277dae"
+    },
+    "china-macro-analyst": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "5e9e49b222bfb03863f53c0439007ebb63b00920cfc906ce11a95ec6855e323b"
+    },
+    "code-documentation": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "f4d8cce93b83688eae7e7c7a6adac03935487cf57253a4a39065d8d95e8ebea6"
+    },
+    "code-refactoring": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "6f19dccc896d729e152f34c4486d8f0fb38a694b8fbeaf002a8e4cf5380896da"
+    },
+    "code-review": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "80be5dd754605f7d4c6e2a18e2d8ef427c24f0957487eaaa34cf11b9f7622e2b"
+    },
+    "cold-email-sequence-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "1921151decb557e699e6b532354d3d588e6dc728b10c99fc930e7e9a8873f4c3"
+    },
+    "cold-outreach-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "8c96ed87870ae5c8d9b8ea9383fd1af8822cd5595ab803cafc5560b85ca14e63"
+    },
+    "color-palette-extractor": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "94e0871ec6551e45b47b469488788b2c4fbfd0f8dc76198085317485f4407cee"
+    },
+    "competitive-ads-extractor": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "8367364ae0aefcf0554468308066e39dc81aeaccfcf9922f85de1b7f56ad61a8"
+    },
+    "competitive-analysis": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "cd22f43ad0abe8b9657676f9b4359691c6afe102a8fc0329f581a3fe1b4f6ec0"
+    },
+    "competitor-price-tracker": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "d0cfe663ad11c3ba4db8ad01aef8a1ddeaa5dd7bc2b07452bb2a805810b53388"
+    },
+    "connect": {
+      "source": "ComposioHQ/awesome-claude-skills",
+      "sourceType": "github",
+      "computedHash": "85aee775c70ddfba6873dc8dd79b0f957bcadc9c4454c9b5caedb8b6456a733c"
+    },
+    "connect-apps": {
+      "source": "ComposioHQ/awesome-claude-skills",
+      "sourceType": "github",
+      "computedHash": "46ff9090ad2709d097f07d621873fb96e8b77ef515d81d48bf532adebfd01d8d"
+    },
+    "content-brief": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "1e8041c30b9051e38042ca165d8df17afd8e0bad978dfc5c9a767ca7b8dbdb4d"
+    },
+    "content-brief-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "6812089710de85613b85ac836d0515b521eb547607ec8fcb393ae510f9d014ac"
+    },
+    "content-optimizer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "3d5832c21b89ace1a6d08a8cafe81f1be865718296991307046ca519a5f13978"
+    },
+    "content-repurposer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "d9d56571a54ce552f3cc044bc8031c257ae2cdb79d1bc05661ec89bdad235f00"
+    },
+    "content-research": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "73ba61b5ce5817b67bba934b838f8c0913f224636cabc1b3ffdaaea44a930989"
+    },
+    "content-research-writer": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "de7e9085e875a651f209c826d1a5e7dd5f2436fb38fe565ef76b54492c1a0c22"
+    },
+    "content-trend-researcher": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "daaf733ad02e3068cd12dc71f7d4393e705e11e83f595772879cc75fc4990741"
+    },
+    "coolhunter": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "7caed9f25e75272d8782457fe5f98812628d33916c0fb58f6bf03a22f483e309"
+    },
+    "copy": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "30028daec698b8ef86435c5c5ecdacdc3378349ae9e9652dd035435d5b23da37"
+    },
+    "creative-copywriting": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "dd6ebd95e029afd6e79a45ff142946e38820a46026b48a17905d07c733ef8303"
+    },
+    "cross-border-flow-tracker": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "3072f68f8ecab47b4632b2bc6616f4cfeac05356cc0b074d3d931d278e263678"
+    },
+    "customer-feedback-analyzer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "c64a0c5a42ca1203b4042e9a46833668bf20491e4b5d96d3c28681aade236c84"
+    },
+    "database-design": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "0841360ccae4312b4bae891c7645e2cb48193288fc8bd723d2c4432b2d0da774"
+    },
+    "dev-browser": {
+      "source": "numman-ali/n-skills",
+      "sourceType": "github",
+      "computedHash": "d50d11bbefdc1599d78900828dcb69d48e5091769d3f5ce10e06a60efe2405bf"
+    },
+    "developer-growth-analysis": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "e3dcbe091bacd9f1afdac53319dea01aace1e50a9d8e64c21c859ab0a89765f5"
+    },
+    "discovery-interviews-surveys": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "3db98cc18cfea2fbe14a8294f8cbb2e3676092be5fea211be62f67e22e31adec"
+    },
+    "diverse-content-gen": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "0ee4a5b6baabef2ae3b9110cd1db12dda3af11a8d0dd66af374bb5c1028701f3"
+    },
+    "dividend-growth-pullback-screener": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "1a89fbf5d1ca28e3988cd8a66dc3d1e11b1e5573364ec2ab3fbdb2822a065704"
+    },
+    "doc-coauthoring": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "b964e4c3ffe13f66f76dd7919073e60c7aec622cd8a8363bb36323188100cf8e"
+    },
+    "docx": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "1752fef168b719a27cb3c8d01d452c320f0026f24aafc41630e8a91b7b289daa"
+    },
+    "domain-name-brainstormer": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "911dba9c4e55a47bebbf3d44482579518797a94d5bfc02088a9ed85360df6d2b"
+    },
+    "earnings-calendar": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "b213f7b34ea9274fc667ef935fca8e88fa89c9987d9b32ad1506cfa53a0625d4"
+    },
+    "email-subject-line-optimizer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "9eaa25cee7d710dac5a236c908f7013d822e3fc792a5c50d493cc5ecdcd8799a"
+    },
+    "email-template-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "c64203235d47263d0f38248c9130c62312eaf91623aa83f90396206bc76c7962"
+    },
+    "executive-dashboard-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "272756bafe5aad19de839ed964bc5dd80d2c9238c31b46c04db923a88276579c"
+    },
+    "fact-checker": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "04d5e5285f37364c25dd80de555429a0b007291f5b31e410e8ea1f84e2054e16"
+    },
+    "feature-planning": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "8f9ffd3d2a0ac5bbdcaf179428da14ed2b6264ac51421cb47814f6547c28de33"
+    },
+    "figma": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "b73e3dc60f2531c0fed4b086c63ace91c2b6bdd80f5c747b9309fcbe0c4905b9"
+    },
+    "figma-implement-design": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "d6f7141e613b102b1c4b0abb392b4d5b57d2a7ea5d0036cfea85038dc24120ed"
+    },
+    "file-organizer": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "1b03d0f0879230671fba161b92d732c9ae7e947bfe061cbf008d39fa9df1ed8b"
+    },
+    "font-pairing-suggester": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "03b9ac9b499f962f9676bbd669584c262becb77193646c30c2c14c20ca5b353f"
+    },
+    "forecast-premortem": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "ef9f2e04c9731cecfd0a0c5f5871f0cf56c140ebda9f03d886d8879a99a89c81"
+    },
+    "framework-critical-thinking": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "bd722b2bd778fbc7cad58e083ae74e05968569357ecc99139f7e2afb60882ba4"
+    },
+    "framework-initiative": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "2d887f041cdbbc0d90555a4cd107bb1b1af2c356849c357f1a025b8b945bf1d3"
+    },
+    "frontend-design": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "a6ab89128348078fe335a2b39946d5bf98d1d5501e6a563308d91d55167bac2a"
+    },
+    "funnel-analysis": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "904a129b7f0f43220a6db81db1a10ae755ed87b0b615313003cf165f0aafac3c"
+    },
+    "gastown": {
+      "source": "numman-ali/n-skills",
+      "sourceType": "github",
+      "computedHash": "8bc368732260ec6cbf1899c13cdcdb6629f285fb64131bea94bebf8c05975796"
+    },
+    "gh-fix-ci": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "1b1ce4eeeae2bfc175d05f1b69e07b17dfa1fddf99a96c22b6dcae7e5fb4e550"
+    },
+    "gsc-assistant": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "e3edcc9989482a71d5160dc100ea03ab006a3d94a470b095284ebbd7340c48e7"
+    },
+    "hk-stock-analysis": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "9ee4b9e0fc85afff772855aef5b180915536628efba32b168b58f695f8d5b125"
+    },
+    "hook-stack-evaluator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "fd1387e5add7dce2a8cacf1713c7a25ebbbe64c8bd8f9d75cd881f69168c91a7"
+    },
+    "humanize": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "96116ca1dadc8bf4f2943b82728a143fa3e420723f258b37f53187e52b723d24"
+    },
+    "image-enhancer": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "2fbd9f8dadf7de2e93844d0626a46f1096925ee78f41174f4c261604b39828ca"
+    },
+    "imagine": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "dfcbb70829fbdb4aa935eef93e7bc37008a3bfc8a589c296f2a3b18bf617d5d6"
+    },
+    "infographic-creation": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "b52305a170de433ecb2b9c6f6b05f246a7f77581a0328d033fd523451b68c3df"
+    },
+    "instagram": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "011c98c11126c6f36f4d69d63c1762928761a9abb42f1c7d26da8719e52740c2"
+    },
+    "institutional-flow-tracker": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "5068b1a6025a548221210020121c73f1432d20924c45c9b204537b56e4c27efe"
+    },
+    "internal-comms": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "45253c8d1fe1ddaa47f8c4b6111891ea84991657da3fa52249b0c23f3635f86f"
+    },
+    "invoice-organizer": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "3981cc7b74330cb508ffd53e03664e94eb3413b9fbf9fd14a123774de15a8499"
+    },
+    "javascript-typescript": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "eb1420863e50c31522c28970472336a27b48095b1e1031b39f34e541e990013a"
+    },
+    "jira-issues": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "72b2b005bda03df383d13297212128a8d0e0af3a0e48fa9b68282c1911304dd4"
+    },
+    "job-application": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "c397171ae549516e916cadd7d8b70cc720f1bbc834fbad23ee97df2257db2269"
+    },
+    "keyword-cluster-builder": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "b678129d606305b5cb22ea423a77a80c059787425d52c68540ce6095dd38c4e1"
+    },
+    "landing-page": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "d78fb341bc53a0a8cd990fe7e15c1026546e32564221c04969b59702dac7f8c4"
+    },
+    "landing-page-copywriter": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "f7c7ceb8d99be73eb3e84c6281f1cd56121342f36c94b1d5d2835e4273598ab1"
+    },
+    "langsmith-fetch": {
+      "source": "ComposioHQ/awesome-claude-skills",
+      "sourceType": "github",
+      "computedHash": "7953660eee3f80ce985956e4ad2ed1f551efca6aad596b7f3479d5a829602180"
+    },
+    "launch-gtm-execution": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "f3120f15bd78ef1abc92a9f31da187cbceab332b67d20dcdd718de3e3366132b"
+    },
+    "lead-research-assistant": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "08cf5477dfdcbefa0758fad431c226efb9f09e108c8c6477b4a14db2d6810889"
+    },
+    "linkedin-announcement-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "0b9f955242c2400bbd1fb0ae0dab856d49c44c00194acd0c8b426a550e14b355"
+    },
+    "linkedin-post-optimizer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "c2fad48ba60e7a74074c0e0a729c3e043c2033122181077963aca382a069944f"
+    },
+    "llm-application-dev": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "32259ec05ab9465ce4cb92acc1cc4d40c51abf6f09f7e1031bc16de1cde0524f"
+    },
+    "market-environment-analysis": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "7edd02917c98a6ebbbdfa7232d0db3e7f3fe77ec09f667fe1c61615954e1eeea"
+    },
+    "market-news-analyst": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "d997a33084ee7eb4246efcbb594ca2e891aa788abdf40fec225ef1594037bb98"
+    },
+    "marketing": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "9277fde11e25c52e08118b3d9a51a6fe5261cf83c1b388e06886bc5781cac3d3"
+    },
+    "marketing-demand-acquisition": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "aee1d1c04ea03b7daa550983d670bda46cb42c078c9d03159d909ba31f0d1d3b"
+    },
+    "marketing-strategy-pmm": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "294678be3ca8afe2017a32938421b0c06d3a38601ef2d2d5c67504b474657606"
+    },
+    "mcp-builder": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "4065235c60f3cae4005905710d1abcc0a752326ec9f5a154987a10de835bdd25"
+    },
+    "media-processing": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "71799229a71ce9d4e4f0d1dcc09c661bba6134f453e5ba4eed6bce001150a7c0"
+    },
+    "meeting-insights-analyzer": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "73d94649632b9b146bb9a745a31efcbc315a8916f14619a327f009b54d1be656"
+    },
+    "mermaid-diagrams": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "8d181c5a2f7609c3fec86a2a41fbe0d02494734f1824644e9f301b2b25912390"
+    },
+    "mermaid-tools": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "a7a040a92c488d500f7854318a3f5ddbd589da6625ccc574e773c19d14ccdf2a"
+    },
+    "n8n-skills": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "03dec281eb0662659685dc7c2b98c6cc7d026693141596c370734bedede77177"
+    },
+    "nano-banana": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "54d011e93828a28e40df5be8c2810e3da4c2ef8323a155862375f79e574301a7"
+    },
+    "nano-banana-pro": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "4d140147a08c565b141a43a8d98325fec82082dadcc35b81e4e8831b4e9c8d2e"
+    },
+    "newsletter-coach": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "56e5e2d47be3b89ee369a5b4b33c314bccec8d759fdc1d0dd8b5523a0a0a8b4f"
+    },
+    "notion-spec-to-implementation": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "887f15eb25fa806869f8eb04b16a697f678431da4a744ecdf9d136ef76c4132b"
+    },
+    "open-source-maintainer": {
+      "source": "numman-ali/n-skills",
+      "sourceType": "github",
+      "computedHash": "52899b710b7b17a4e5f62ca7cf02a54da58092a5f3d63fe635c34f6f87d4decf"
+    },
+    "openai-docs": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "f30e060aa8f10dbd0b921205b76a44debed70a954d2fdfbdfb9c0a2bd0b96f56"
+    },
+    "options-strategy-advisor": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "ce4665c5b2e20ca5bb7f04b2374d123b44e7182600787dd72e10655490cb0552"
+    },
+    "orchestration": {
+      "source": "numman-ali/n-skills",
+      "sourceType": "github",
+      "computedHash": "5121b8d1cccc4be26be8bb8de1d4e744d9225c88dbf95616cab6ff19d2705e43"
+    },
+    "pair-trade-screener": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "fc394bec5a8dbfd8b06221f4c67a5ecfb84d81a0791827bbc9d56abd6b1f13eb"
+    },
+    "pdf": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "360147fd0fc8e7c255fce25223aa3cb403c253bb704e63c3392d631bb8d11a08"
+    },
+    "personalization-at-scale": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "83693e8f164acbaa1afbebb0c993f9e761ded087ab8ba789b673fd382ad097c5"
+    },
+    "pexels-media": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "40ce23051e4e4fd62431c0fd03cf4f9fc8db68c7563f3abbd382df731d4a65c7"
+    },
+    "playwright": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "595a334de3bd5335f442a33d1bdefb01207c88c99fe43e3bd99b0d5435f230de"
+    },
+    "podcast-to-content-suite": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "b13dc74a0af1d5571ffb7510674a314ec9c2aa1eeebcb9ff3e17df48af80d53e"
+    },
+    "portfolio-manager": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "73943ef633a05e015c77fb7679e73eeba6228fa88c7ecba57910c3cdc52ec1b9"
+    },
+    "posthog-analytics": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "c24d809a776c957dcede63315c8a719433b12f412fb91b3f37f971c97ee0de2e"
+    },
+    "postmortem": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "a1fad5d9fc4932f9b52562199a2a486c1ed0cd3e0ae6dc862c8c08fe1026f177"
+    },
+    "pptx": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "08b436937cea6e1789f7a1dd2b4c56cbfb0d7bc73a2f457c24fef726ef8dc932"
+    },
+    "prd-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "ce4db0011a0dbea1f2b6474738031c094c9f96de93fa09e7917c9c66f8c7024b"
+    },
+    "prd-v09-gtm-strategy": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "9be585217a6b1af51e813548678f428bd0c17ddc5a066d2f4d4e0f3a23d59941"
+    },
+    "pre-deploy-checklist": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "c3122363f171cba894d9de2612d23a296b85a73a1b2134b156fefd17bdfee66a"
+    },
+    "pre-publish-post-assistant": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "780250705f1ce3354dd4b35a23a3a9b4df3e80b416a18e0383cf2373ce90c270"
+    },
+    "presentation-builder": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "cd1ad5bd834923b8890d17b65918910e96e5430803625b90ce56e24b2d515879"
+    },
+    "presentation-design-enhancer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "68dd5531f62c85cb57a683e0cd940abbc683073d56087d41268ce743038da53b"
+    },
+    "presentation-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "9bdfdf379c0850841d79252aef80c69bd9c8a92d6a983ead06a647c9657ef52d"
+    },
+    "pricing-strategist": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "bd88d1da8c7d4fca7f0758fa9e0991b27d45831d2786de042bb1a2b214def925"
+    },
+    "prioritization-effort-impact": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "d3dd9c094a617fbee5bed13e9c14601de8c46b06a10da49e35ddad181bf4ccfb"
+    },
+    "product-analytics": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "ddd5f40d718baea53a7a6a636da7deff26e452dd7d509f7d9d484ce1e57c88b8"
+    },
+    "product-strategy": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "25036663346edd8bf27e5ff90869481bfbe5e245f1eb1e998718d5db612c75d8"
+    },
+    "prompt-engineering": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "f1f683d15e4db8d19e8be030863ba9e56d37942b12635ce0f8f77ed4ed3e8499"
+    },
+    "python-development": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "3ec97771659c043f6fe337908a46f10b28d4b55131eeadb4ced859382ee32f3b"
+    },
+    "qa-regression": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "756da389f3b87a5446aeb61b51f288ea4dbe06d016b3b13e8ee3b3ddb20631a8"
+    },
+    "qr-code-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "d7d7c2e8779296f645e1895862081b68384a699d4941c015c7610d6db94152ef"
+    },
+    "quick-spec": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "7c792b7f991cd62638b423ac57ba9fff8d9415150e1dd8bb00f6ad0540bc8927"
+    },
+    "raffle-winner-picker": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "cd97da2fa280d9545b6f60dfc07335663af4932acb58d83d6801a1bb3b8a8aae"
+    },
+    "readme-expert": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "767fcf9e50648a032e5f5671a034c670a5abee7eb77323ca9cf228005d39cca6"
+    },
+    "red-teaming": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "2509d5bf5a3830d6896e786fd028195beeb24f4aabd23d78d3498ef3f1f6336d"
+    },
+    "releasing": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "768197d74782ea4e1c3d8e6aa3e0d41cc39b42c02ec06d369f2862e03fed0006"
+    },
+    "requirements-specification": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "c7e1f516409992a8a6f80987164a741750203f9756e08dcdb89524e1160d86e5"
+    },
+    "roadmap-backcast": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "6a387ee8fa2615a2bc4fad96cce919efd3e5917140e6b2f23d773fdb0355730f"
+    },
+    "roadmap-prioritization-planning": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "a5ab61f504c364483acab36cef8bbcffede8e2be94ee37d65af0bdcac7b1f07f"
+    },
+    "roi-analyzer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "ddb389706c06e36654492e7a91af8ef6df30590b93e60bf774e5ef55011b1f70"
+    },
+    "running-marketing-campaigns": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "465a16a00586af6908a5b44fb00d47aa0795aac0e1e12ed57f2fa3465bf7b38d"
+    },
+    "scenario-analyzer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "4830c849f0e938119388925cfcb7e24423e4f87cb0253f0cd204a2a610c0487b"
+    },
+    "screenwriter": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "0927f6a11e6ca838d8d9707cddf357e0814329d1e268a477d0b934e25def557b"
+    },
+    "sector-analyst": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "487610924bfdd3defd96efc474fbc53bb3035a486b8c8925f2db83d3465ae79d"
+    },
+    "sentry": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "ded66300cf449c4507b54964f5536dc86d8697654f0ea4b5986c1a9cd278f3c0"
+    },
+    "seo-content-optimizer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "3f11d9bf32b41ede8997bc03a3a56bdd1e4fbe896e40d39f249844e1c3f5d299"
+    },
+    "seo-wordpress-manager": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "d0d9fffe026da7dba90dcfd3d0a9917be0dfbb005dc6450ac0304e70907b3515"
+    },
+    "serp-analysis": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "3ee276667a9412fb2b5536f1832a64271fd30666fb881419b471b4f831438aac"
+    },
+    "serpapi": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "20e32883031bd916de1e7e777cef0b7dcc965455c10a042f29bd740e3890d0c3"
+    },
+    "shioaji": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "b9c0d8595fa61a38b8a7a684853ac6fab85edfb677b7c69feb0ea9a0b7268926"
+    },
+    "short-form-converter": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "b3ca73431d4fb2990009bfbca6bad1d2fc8d049a67a0fe642a9cff2cc92a5e51"
+    },
+    "skill-creator": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "78bc17874de7c6d38edea36a023a1a482215ae8003fcd80fe50c5db09bb5e970"
+    },
+    "skill-navigator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "4e3e50ab7c3c6ca2709f754f05ba077631d20059369233ee64019355830f3e72"
+    },
+    "skill-share": {
+      "source": "ComposioHQ/awesome-claude-skills",
+      "sourceType": "github",
+      "computedHash": "09f71aa830cb200d355ff6103958d85ecd33121c4454e3b8c2d60b70c88e05cc"
+    },
+    "skillkit": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "26a803fb304a274fcb56f6cdd8c1e4d49dceb2de821c6be6486bac98a0a92047"
+    },
+    "skillkit-help": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "ab4a613518612e1197bcba5bfb084cfaf5ef5cb3fd19fd60e40746e5a764da44"
+    },
+    "skills-discovery": {
+      "source": "Kamalnrf/claude-plugins",
+      "sourceType": "github",
+      "computedHash": "34a85ac5069bdc615146ba0904fcd80a1c9bd29ae5b551b8c06e5a0053cc533d"
+    },
+    "slack-gif-creator": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "6139cf556d1dd78b69c1dd84af43c132db391b6f31e67de38d1edb4551ba93e0"
+    },
+    "slidev": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "43f580efd9420bf06cdbb6fd370cb4f144955ae883fc0558a1ebbd7e8debc3c7"
+    },
+    "social-media": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "1eb66a1aad3a37f2b1f8742b4cbd7b7ca1a5538be28bd0fd4daf44749a7f11ce"
+    },
+    "social-media-analyzer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "b806419b09f434e6a309c88bd60e926859200f5625373e756e1eb9967cd80b7d"
+    },
+    "social-media-content-repurposer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "28c23d9124f908c445047e65ab7c842c0f16e661153aa819a367498e2b6b4faf"
+    },
+    "social-media-seo": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "82da806aed12639ef96938925b09d41c024a870a6f3abe978b45db52c6abca62"
+    },
+    "sponsor-pitch-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "36544ccc4699f0c9addf955dd2081c90dac1a6593251abc2e58b75cb6a247847"
+    },
+    "srt-translator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "a4e0b0a413dd3b792b895e436cc3635531831b2e9f7465dad6a90eb1e468c441"
+    },
+    "stakeholders-org-design": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "167bd7c13903b4ba9bab5a2d5c1086b023cbf314302ee5b0ee72742a735eef9b"
+    },
+    "stanley-druckenmiller-investment": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "bed8e8c5b714929e2312d5b50672cdc75f19ae5eb11a2043a4b3da8cf170a73c"
+    },
+    "stock-screener": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "bb2b84f779c495c60b600b26f1316c826536effb1eaf72a8e1297277ffb895e3"
+    },
+    "storyline-builder": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "17d886ba1aedcfc2393c89e152ba051b1764b22c96cc51834d3d5fe6c38998f7"
+    },
+    "storyteller": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "5f25c6e9b079efff1e6e2ba03135c7265ebd1762bcb73b49d5d6e900ac683d54"
+    },
+    "tailored-resume-generator": {
+      "source": "ComposioHQ/awesome-claude-skills",
+      "sourceType": "github",
+      "computedHash": "37ad72564c908b09bcccc8a34087bef06b12b4c38dc68d76cddba5afc588bd92"
+    },
+    "tapestry": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "e91b9fc4df94afab585a594e44b43c5dcaea31bc6d92f3227245cf743dbfdb70"
+    },
+    "technical-analyst": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "76950bd79b8b6f05f7d56d2e1a87ddfe868e7f12e1780d285482dfbbb0b60ddc"
+    },
+    "technical-launch-planner": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "294787b931ad066e74b2bfb1c434bd18744b43222afddee993f47c5033f1250f"
+    },
+    "template-skill": {
+      "source": "ComposioHQ/awesome-claude-skills",
+      "sourceType": "github",
+      "computedHash": "38c88f722b574a922311d334a70c2008a2a5b896f06eaa75516d716e5725b26f"
+    },
+    "theme-factory": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "93e78aa44f8fa00bb2c0608f400de1e1dcd6494611dd8ea27c867654240c7bcd"
+    },
+    "thread-pro": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "2eb970e3d1700868807c11cfeefef2e3cfae84dec10763a5c2f12d402a0933d3"
+    },
+    "thumbnail-concept-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "64204e4242af0ee7ed9107178f8f203e8de163223dc87cb2df00f15e582757bb"
+    },
+    "tinkering": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "584d2882697fb67a3d0b3470986bcc4ba31e348d4387142a27a4785d49085207"
+    },
+    "transcribe-and-analyze": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "d4b949ee03d5de0c95f1f597262afbbcbbb1f2d0d1055f38ce55a2ddee4e4be0"
+    },
+    "twitter-algorithm-optimizer": {
+      "source": "ComposioHQ/awesome-claude-skills",
+      "sourceType": "github",
+      "computedHash": "4dacb151d9267f390a2a1aa5ff06ea984c2270f6a188315dcb8a65cd0d4bcf34"
+    },
+    "twitter-reader": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "3ee2c105cba9be4486ff3c2fd9d4a7323592732ca548edca3c866cdc01611ea4"
+    },
+    "ui-ux-audit": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "f782045cbb379a6cfe4e89954bcdf5520ef54ae1a3df8293fe062caa3b209fbb"
+    },
+    "us-market-bubble-detector": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "f6ee4af19d494f3204e4227c58e66bcd9a99ae54464c1f85b693bbd7b1393e87"
+    },
+    "us-stock-analysis": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "dc148531cbd0bcd342cc0ab309d61775ee3751420fd9233710d3cc9a032d3097"
+    },
+    "user-persona-creation": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "c6bdac47f969fae094622a59ea5f23c09884485989faf563adbf8e4b8afea5da"
+    },
+    "user-research": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "a9d4dd2afdf20f73aca51c3e5cee579edbc952ec6762bad7af7981affe8fe220"
+    },
+    "utm-builder": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "95330bd1385a8a981b65541d253e734587f786803f85d6520c4179b8db1000d6"
+    },
+    "validate-plan": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "d016cf4c95d940a3d2bdbfb06c66611d1bc2405c76471b3e3add327dab0b129d"
+    },
+    "value-dividend-screener": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "26d9de4812ee05466f9ffcb561993d8280f463cc6ef122c811aebd782aef71c9"
+    },
+    "verify-before-ship": {
+      "source": "rfxlamia/skillkit",
+      "sourceType": "github",
+      "computedHash": "6e887da8c70189002f2e6adf6e8a41b0b356e007d37ea5857f4e8198e0627a08"
+    },
+    "video-analytics-interpreter": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "938184292cd3ecc9dc71c3acfdac8ba850cbe1807fb3c21f3d8bddd9a49cf05a"
+    },
+    "video-comparer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "4664fe95c83acc98d4155bcaa6bc27935c7ded1ead7a749b8aad51aff04fbbbb"
+    },
+    "video-downloader": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "56d7587af52d54f5475face7ff01f2b3eac4d0b24507d876c1a6c88af03d33d0"
+    },
+    "video-hook-generator": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "5656fe1151dadee3848815336df034f5a636ae10fe52c9783f2b6d8b0421e212"
+    },
+    "video-script-collaborial": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "35a7c16771f85dd6d6e67479a81afbaab1756bd916cbd14bcddde1e3dea04c8c"
+    },
+    "video-script-writer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "dab8a35ffb54817328da83db2a7f091f96573c0b75090c336ba98797fcc87362"
+    },
+    "video-title-optimizer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "280f7244ff6f386a1fc0bd74630b2f3a73e659494e0577ba173fbabcaff6a5a6"
+    },
+    "video-to-gif": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "084ad77dc8f108ce79936b4ec5d861e356779a66736660f6b1ca2f85c8fcf54e"
+    },
+    "weak-signal-synthesizer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "a2d9c4e611c3a4a7f46991f9b651fcac24e6818d8cb4df2be71fa8c3e2d54259"
+    },
+    "webapp-testing": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "d2ff05dcd5f2837cf05d19dd20774cb6c31f22b6818a2f9df314204ff7a7b5c6"
+    },
+    "webfluence": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "7ff5272ed7c22f78d79b6eac9a7191f470c6dcc092c9221ae82d7f875b93b24f"
+    },
+    "work-intake": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "fd1de624bda8f58ec9c2cd8c499da29605ccf422e42fc0513d89dc61e17a306a"
+    },
+    "writing-product-specs": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "3f2d8f1c5ab5a6880d98c2cd2d738681ecd35ae24a4660bf1697400879353dc7"
+    },
+    "writing-user-stories": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "41476629ad709462f30272869ecf6e3a1747ba5fca38a84e31396b3cfe875677"
+    },
+    "xlsx": {
+      "source": "MoizIbnYousaf/Ai-Agent-Skills",
+      "sourceType": "github",
+      "computedHash": "7e1e283e7baef4892acc8a860cf57ba1ec05c124cc4f539d1a65cfb4e9dd75dc"
+    },
+    "youtube-downloader": {
+      "source": "ComposioHQ/awesome-claude-skills",
+      "sourceType": "github",
+      "computedHash": "3e4e2304770b72777cabb2b03fb94503adecc9917e9c02ba295dbce31b75d791"
+    },
+    "youtube-processor": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "84fb5be4c12efea7c96668c91094500ad3132a3f62019ab433f26413d9cbc65c"
+    },
+    "youtube-seo-optimizer": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "7b19823564d7777c0eacac901377e943254bee628c0f2274d46b7cde2b25dbb7"
+    },
+    "youtube-to-markdown": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "baa5cbc4e834c79cc155d0ab0c1a8660dcf940fa1ead8e445fb52b62d84ac172"
+    },
+    "youtube-transcript": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "d2d0b3471a0d7e12516d5c3b2d21fbc4b997c3dcf120e72ba87196ff005b069f"
+    },
+    "zai-cli": {
+      "source": "numman-ali/n-skills",
+      "sourceType": "github",
+      "computedHash": "afe476a1bd1121864d3f242c2dc366807b2605bf8f03ac26bd64703dc9589ffc"
+    },
+    "股票分析": {
+      "source": "nicepkg/ai-workflow",
+      "sourceType": "github",
+      "computedHash": "2cfc01017c5ecd3709006b99845df0efa313b0e1f3a12a597d54c3a3c5749102"
+    }
+  }
+}
