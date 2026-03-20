@@ -37,22 +37,34 @@ class TmdbService
         $searchYear = $this->normalizeSearchYear($parsedFilename->releaseYear);
 
         foreach ($parsedFilename->searchQueries as $query) {
-            $primaryResults = $this->searchMovie($query, $preferredLanguage, $searchYear);
+            foreach ($this->progressiveSearchVariants($query) as $searchQuery) {
+                $primaryResults = $this->searchMovie($searchQuery, $preferredLanguage, $searchYear);
 
-            if ($primaryResults === [] && $searchYear !== null) {
-                $primaryResults = $this->searchMovie($query, $preferredLanguage, null);
-            }
-
-            $candidates = $candidates->merge($primaryResults);
-
-            if ($primaryResults === [] && $preferredLanguage !== self::FALLBACK_LANGUAGE) {
-                $fallbackResults = $this->searchMovie($query, self::FALLBACK_LANGUAGE, $searchYear);
-
-                if ($fallbackResults === [] && $searchYear !== null) {
-                    $fallbackResults = $this->searchMovie($query, self::FALLBACK_LANGUAGE, null);
+                if ($primaryResults === [] && $searchYear !== null) {
+                    $primaryResults = $this->searchMovie($searchQuery, $preferredLanguage, null);
                 }
 
-                $candidates = $candidates->merge($fallbackResults);
+                if ($primaryResults !== []) {
+                    $candidates = $candidates->merge($primaryResults);
+
+                    break;
+                }
+
+                if ($preferredLanguage === self::FALLBACK_LANGUAGE) {
+                    continue;
+                }
+
+                $fallbackResults = $this->searchMovie($searchQuery, self::FALLBACK_LANGUAGE, $searchYear);
+
+                if ($fallbackResults === [] && $searchYear !== null) {
+                    $fallbackResults = $this->searchMovie($searchQuery, self::FALLBACK_LANGUAGE, null);
+                }
+
+                if ($fallbackResults !== []) {
+                    $candidates = $candidates->merge($fallbackResults);
+
+                    break;
+                }
             }
         }
 
@@ -60,6 +72,16 @@ class TmdbService
             ->filter(fn (array $candidate): bool => isset($candidate['tmdb_id']))
             ->keyBy('tmdb_id')
             ->values();
+
+        if ($searchYear !== null) {
+            $uniqueCandidates = $uniqueCandidates
+                ->filter(
+                    fn (array $candidate): bool => isset($candidate['release_year'])
+                        && is_int($candidate['release_year'])
+                        && $candidate['release_year'] === $searchYear,
+                )
+                ->values();
+        }
 
         if ($uniqueCandidates->isEmpty()) {
             return TmdbMatch::unmatched();
@@ -110,30 +132,53 @@ class TmdbService
         $candidates = collect();
 
         foreach ($searchQueries as $searchQuery) {
-            $primary = $this->searchMovie($searchQuery, $preferredLanguage, $searchYear);
-
-            if ($primary === [] && $searchYear !== null) {
-                $primary = $this->searchMovie($searchQuery, $preferredLanguage, null);
-            }
-
-            if ($primary === [] && $preferredLanguage !== self::FALLBACK_LANGUAGE) {
-                $primary = $this->searchMovie($searchQuery, self::FALLBACK_LANGUAGE, $searchYear);
+            foreach ($this->progressiveSearchVariants($searchQuery) as $searchVariant) {
+                $primary = $this->searchMovie($searchVariant, $preferredLanguage, $searchYear);
 
                 if ($primary === [] && $searchYear !== null) {
-                    $primary = $this->searchMovie($searchQuery, self::FALLBACK_LANGUAGE, null);
+                    $primary = $this->searchMovie($searchVariant, $preferredLanguage, null);
+                }
+
+                if ($primary !== []) {
+                    $candidates = $candidates->merge($primary);
+
+                    break;
+                }
+
+                if ($preferredLanguage === self::FALLBACK_LANGUAGE) {
+                    continue;
+                }
+
+                $fallback = $this->searchMovie($searchVariant, self::FALLBACK_LANGUAGE, $searchYear);
+
+                if ($fallback === [] && $searchYear !== null) {
+                    $fallback = $this->searchMovie($searchVariant, self::FALLBACK_LANGUAGE, null);
+                }
+
+                if ($fallback !== []) {
+                    $candidates = $candidates->merge($fallback);
+
+                    break;
                 }
             }
-
-            $candidates = $candidates->merge($primary);
         }
 
         $uniqueCandidates = $candidates
             ->filter(fn (array $candidate): bool => isset($candidate['tmdb_id']))
             ->keyBy('tmdb_id')
-            ->values()
-            ->all();
+            ->values();
 
-        return $this->localizeCandidates($uniqueCandidates, $preferredLanguage);
+        if ($searchYear !== null) {
+            $uniqueCandidates = $uniqueCandidates
+                ->filter(
+                    fn (array $candidate): bool => isset($candidate['release_year'])
+                        && is_int($candidate['release_year'])
+                        && $candidate['release_year'] === $searchYear,
+                )
+                ->values();
+        }
+
+        return $this->localizeCandidates($uniqueCandidates->all(), $preferredLanguage);
     }
 
     /**
@@ -298,6 +343,33 @@ class TmdbService
         ))));
 
         return array_slice($normalized, 0, 6);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function progressiveSearchVariants(string $query): array
+    {
+        $normalizedQuery = trim(preg_replace('/\s+/u', ' ', $query) ?? '');
+
+        if ($normalizedQuery === '') {
+            return [];
+        }
+
+        $tokens = preg_split('/\s+/u', $normalizedQuery) ?: [];
+        $variants = [];
+
+        for ($tokenCount = count($tokens); $tokenCount >= 1; $tokenCount--) {
+            $candidate = trim(implode(' ', array_slice($tokens, 0, $tokenCount)));
+
+            if ($candidate === '') {
+                continue;
+            }
+
+            $variants[$candidate] = true;
+        }
+
+        return array_keys($variants);
     }
 
     /**
