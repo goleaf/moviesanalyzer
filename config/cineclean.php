@@ -41,7 +41,7 @@ return [
     ],
     'google_assist' => [
         'provider' => env('GOOGLE_ASSIST_PROVIDER', 'mcp_google_fetch'),
-        'mcp_command' => env('GOOGLE_ASSIST_MCP_COMMAND', 'uvx mcp-server-fetch'),
+        'mcp_command' => env('GOOGLE_ASSIST_MCP_COMMAND', 'python3 scripts/mcp_fetch_server.py'),
         'mcp_tool' => env('GOOGLE_ASSIST_MCP_TOOL', 'fetch'),
         'mcp_timeout_seconds' => (int) env('GOOGLE_ASSIST_MCP_TIMEOUT_SECONDS', 25),
         'mcp_max_length' => (int) env('GOOGLE_ASSIST_MCP_MAX_LENGTH', 18_000),

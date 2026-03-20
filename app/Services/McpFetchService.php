@@ -21,9 +21,10 @@ class McpFetchService
         $command = $this->prepareCommand(trim((string) config('cineclean.google_assist.mcp_command', '')));
         $timeout = max(5, (int) config('cineclean.google_assist.mcp_timeout_seconds', 25));
         $input = $this->buildInputPayload($url);
+        $environment = $this->processEnvironment($command);
 
         $result = Process::path(base_path())
-            ->env($this->processEnvironment())
+            ->env($environment)
             ->timeout($timeout)
             ->input($input)
             ->run($command);
@@ -264,7 +265,7 @@ class McpFetchService
     /**
      * @return array<string, string>
      */
-    private function processEnvironment(): array
+    private function processEnvironment(string $command): array
     {
         $environment = [
             'PATH' => $this->buildProcessPath(),
@@ -273,6 +274,10 @@ class McpFetchService
 
         if ($home !== '') {
             $environment['HOME'] = $home;
+        }
+
+        if (! $this->shouldSetUvEnvironment($command)) {
+            return $environment;
         }
 
         $uvBaseDir = trim((string) config('cineclean.google_assist.mcp_uv_cache_dir', ''));
@@ -298,6 +303,11 @@ class McpFetchService
         }
 
         return $environment;
+    }
+
+    private function shouldSetUvEnvironment(string $command): bool
+    {
+        return preg_match('/(^|\s)(\S*uvx)(\s|$)/u', $command) === 1;
     }
 
     private function buildProcessPath(): string
