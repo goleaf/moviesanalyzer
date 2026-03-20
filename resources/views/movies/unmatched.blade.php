@@ -97,7 +97,7 @@
     </section>
 
     <div id="manual-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-4">
-        <div class="max-w-2xl mx-auto mt-20 card p-6 space-y-4">
+        <div class="max-w-6xl w-full mx-auto mt-6 md:mt-10 card p-6 space-y-4">
             <h3 class="font-cinema text-2xl">Manual Research &amp; TMDB Search</h3>
             <input id="manual-query" type="text" class="w-full rounded-lg border border-cine bg-black/30 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/30">
             <div class="flex items-center justify-between">
@@ -105,8 +105,8 @@
                 <button id="manual-google-submit" type="button" class="px-4 py-2 rounded-lg border border-amber-500/40 bg-amber-900/20 hover:bg-amber-800/30">Google Research</button>
                 <button id="manual-search-submit" type="button" class="px-4 py-2 rounded-lg border border-cine bg-card hover:bg-white/5">Search</button>
             </div>
-            <div id="google-results" class="max-h-60 overflow-auto border border-cine rounded-xl p-3 text-sm space-y-2"></div>
-            <div id="manual-results" class="max-h-80 overflow-auto border border-cine rounded-xl p-3 text-sm space-y-2"></div>
+            <div id="google-results" class="max-h-[26vh] overflow-auto border border-cine rounded-xl p-3 text-sm space-y-2"></div>
+            <div id="manual-results" class="max-h-[56vh] overflow-auto border border-cine rounded-xl p-3 text-sm space-y-3"></div>
         </div>
     </div>
 @endsection
@@ -184,6 +184,20 @@
 
             const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+            const posterUrl = (movie) => {
+                const raw = String(movie?.poster_path || '').trim();
+
+                if (!raw) {
+                    return '';
+                }
+
+                if (raw.startsWith('http://') || raw.startsWith('https://')) {
+                    return safeUrl(raw);
+                }
+
+                return `https://image.tmdb.org/t/p/w200${raw}`;
+            };
+
             const refreshMovie = async (button, quiet = false) => {
                 const initialText = button.textContent;
                 button.disabled = true;
@@ -258,11 +272,40 @@
                 }
 
                 resultsEl.innerHTML = movies.map((movie) => {
+                    const overview = String(movie.overview || '').trim();
+                    const poster = posterUrl(movie);
+
                     return `
-                        <div class="rounded-lg border border-cine p-3 flex items-center justify-between gap-3">
-                            <div>
-                                <p class="font-semibold">${escapeHtml(movie.title || 'Untitled')} (${escapeHtml(movie.release_year || 'n/a')})</p>
+                        <div class="rounded-xl border border-cine p-4 grid grid-cols-1 md:grid-cols-[120px,1fr,auto] gap-4 items-start">
+                            <div class="w-[120px]">
+                                ${poster ? `
+                                    <img
+                                        src="${escapeHtml(poster)}"
+                                        alt="${escapeHtml(movie.title || 'Poster')}"
+                                        loading="lazy"
+                                        class="w-[120px] h-[172px] rounded-lg object-cover border border-cine/60"
+                                    >
+                                ` : `
+                                    <div class="w-[120px] h-[172px] rounded-lg border border-cine/60 bg-black/40 text-muted text-xs flex items-center justify-center text-center px-2">
+                                        No poster
+                                    </div>
+                                `}
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <p class="font-semibold text-base">${escapeHtml(movie.title || 'Untitled')} (${escapeHtml(movie.release_year || 'n/a')})</p>
+                                    <a
+                                        href="${safeUrl(movie.tmdb_url || '#')}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="text-xs text-amber-300 hover:text-amber-200 underline underline-offset-2"
+                                    >
+                                        TMDB
+                                    </a>
+                                </div>
                                 <p class="text-xs text-muted">★ ${escapeHtml(movie.vote_average ?? 'n/a')} · TMDB #${escapeHtml(movie.tmdb_id)}</p>
+                                <p class="text-xs uppercase tracking-wide text-muted">Описание (RU)</p>
+                                <p class="text-sm leading-relaxed whitespace-pre-line">${escapeHtml(overview || 'Русское описание недоступно для этого фильма.')}</p>
                             </div>
                             <button
                                 class="pick-match px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-900/20 hover:bg-amber-800/30 text-xs"

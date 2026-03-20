@@ -96,6 +96,7 @@ class FilenameParser
 
         $tokens = preg_split('/\s+/u', $normalized) ?: [];
         $cleanTokens = [];
+        $hasTechnicalTokens = false;
 
         foreach ($tokens as $token) {
             $token = trim($token, " \t\n\r\0\x0B.,");
@@ -108,11 +109,17 @@ class FilenameParser
                 continue;
             }
 
+            if ($this->shouldStopAtReleaseSuffix($normalizedToken, count($cleanTokens), $releaseYear, $hasTechnicalTokens)) {
+                break;
+            }
+
             if ($this->isYearToken($normalizedToken)) {
                 continue;
             }
 
             if ($this->isDisposableToken($normalizedToken)) {
+                $hasTechnicalTokens = true;
+
                 continue;
             }
 
@@ -243,5 +250,22 @@ class FilenameParser
         $normalized = mb_strtolower($value, 'UTF-8');
 
         return trim(preg_replace('/\s+/u', ' ', strtr($normalized, self::CYRILLIC_MAP)) ?? '');
+    }
+
+    private function shouldStopAtReleaseSuffix(
+        string $normalizedToken,
+        int $cleanTokenCount,
+        ?int $releaseYear,
+        bool $hasTechnicalTokens,
+    ): bool {
+        if ($cleanTokenCount < 2) {
+            return false;
+        }
+
+        if ($normalizedToken !== 'от') {
+            return false;
+        }
+
+        return $releaseYear !== null || $hasTechnicalTokens;
     }
 }
