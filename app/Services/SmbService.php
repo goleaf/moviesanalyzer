@@ -8,6 +8,7 @@ use Icewind\SMB\IShare;
 use Icewind\SMB\Options;
 use Icewind\SMB\ServerFactory;
 use RuntimeException;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 use Throwable;
 
@@ -287,18 +288,19 @@ class SmbService
 
         $process->setTimeout($this->timeoutSeconds);
         $process->setIdleTimeout($this->timeoutSeconds);
-        $process->run();
+        try {
+            $process->run();
+        } catch (ProcessTimedOutException $exception) {
+            throw new RuntimeException(
+                sprintf(
+                    'SMB command timed out after %d seconds. Adjust SMB_TIMEOUT_SECONDS or improve SMB response time.',
+                    $this->timeoutSeconds,
+                ),
+                previous: $exception,
+            );
+        }
 
         if (! $process->isSuccessful()) {
-            if ($process->isTimedOut()) {
-                throw new RuntimeException(
-                    sprintf(
-                        'SMB command timed out after %d seconds. Adjust SMB_TIMEOUT_SECONDS or improve SMB response time.',
-                        $this->timeoutSeconds,
-                    ),
-                );
-            }
-
             $errorMessage = trim($process->getErrorOutput() ?: $process->getOutput());
 
             if (str_contains($errorMessage, 'Can\'t load') && str_contains($errorMessage, 'smb.conf')) {
