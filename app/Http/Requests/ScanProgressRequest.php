@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StartScanRequest extends FormRequest
+class ScanProgressRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -17,8 +17,6 @@ class StartScanRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'rescan_all' => ['sometimes', 'boolean'],
-        ];
+        return [];
     }
 }

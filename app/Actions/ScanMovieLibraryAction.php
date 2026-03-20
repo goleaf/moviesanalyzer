@@ -23,7 +23,7 @@ class ScanMovieLibraryAction
         public TmdbService $tmdbService,
     ) {}
 
-    public function handle(?Closure $progressCallback = null): ScanLog
+    public function handle(?Closure $progressCallback = null, bool $rescanAll = false): ScanLog
     {
         $startedAt = now();
         $progressKey = (string) config('cineclean.scan.progress_cache_key');
@@ -38,14 +38,18 @@ class ScanMovieLibraryAction
         $videoFiles = $this->smbService->listVideoFiles();
         $total = count($videoFiles);
 
-        $scannedToday = array_fill_keys(
-            MovieFile::query()
-                ->select(['smb_path'])
-                ->whereDate('scanned_at', $startedAt->toDateString())
-                ->pluck('smb_path')
-                ->all(),
-            true,
-        );
+        $scannedToday = [];
+
+        if (! $rescanAll) {
+            $scannedToday = array_fill_keys(
+                MovieFile::query()
+                    ->select(['smb_path'])
+                    ->whereDate('scanned_at', $startedAt->toDateString())
+                    ->pluck('smb_path')
+                    ->all(),
+                true,
+            );
+        }
 
         $existing = MovieFile::query()
             ->select(['id', 'smb_path'])
@@ -68,6 +72,7 @@ class ScanMovieLibraryAction
             'running' => true,
             'finished' => false,
             'status' => 'listing',
+            'rescan_all' => $rescanAll,
             'current' => 0,
             'total' => $total,
             'file' => null,
@@ -90,6 +95,7 @@ class ScanMovieLibraryAction
                     'running' => true,
                     'finished' => false,
                     'status' => 'skipped',
+                    'rescan_all' => $rescanAll,
                     'current' => $current,
                     'total' => $total,
                     'file' => $videoFile['filename'],
@@ -157,6 +163,7 @@ class ScanMovieLibraryAction
                 'running' => true,
                 'finished' => false,
                 'status' => 'matching',
+                'rescan_all' => $rescanAll,
                 'current' => $current,
                 'total' => $total,
                 'file' => $videoFile['filename'],
@@ -183,6 +190,7 @@ class ScanMovieLibraryAction
             'running' => false,
             'finished' => true,
             'status' => 'complete',
+            'rescan_all' => $rescanAll,
             'current' => $total,
             'total' => $total,
             'file' => null,

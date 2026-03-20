@@ -15,6 +15,7 @@
 
                 <form method="POST" action="{{ route('cineclean.scan.start') }}" id="scan-form">
                     @csrf
+                    <input type="hidden" name="rescan_all" value="1">
                     <button type="submit" class="px-8 py-4 text-sm font-semibold tracking-wider rounded-xl bg-amber-500/90 text-black hover:bg-amber-400 transition shadow-lg shadow-amber-900/30">
                         SCAN LIBRARY
                     </button>

@@ -36,10 +36,22 @@ class FilenameRulesController extends Controller
             ->paginate(50)
             ->withQueryString();
 
+        $totalRules = FilenameRule::query()->count();
+        $activeRules = FilenameRule::query()->where('is_active', true)->count();
+        $replaceRules = FilenameRule::query()->where('rule_mode', 'replace')->count();
+        $removeTokenRules = FilenameRule::query()->where('rule_mode', 'remove_token')->count();
+
         return view('rules.index', [
             'rules' => $rules,
             'defaultTokens' => FilenameParser::defaultRemovableTokens(),
             'previewSample' => $request->string('sample', 'The.Matrix.1999.1080p.BluRay.x264.mkv')->toString(),
+            'ruleStats' => [
+                'total' => $totalRules,
+                'active' => $activeRules,
+                'disabled' => max(0, $totalRules - $activeRules),
+                'replace' => $replaceRules,
+                'remove_token' => $removeTokenRules,
+            ],
         ]);
     }
 
