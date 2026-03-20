@@ -38,7 +38,7 @@ class MoviesController extends Controller
         ]);
     }
 
-    public function unmatched(): View
+    public function unmatched(FilenameParser $filenameParser): View
     {
         $files = MovieFile::query()
             ->select([
@@ -57,7 +57,28 @@ class MoviesController extends Controller
             ->unmatched()
             ->orderByDesc('scanned_at')
             ->orderBy('id')
-            ->get();
+            ->get()
+            ->map(function (MovieFile $movieFile) use ($filenameParser): MovieFile {
+                $effectiveCleanTitle = trim((string) ($movieFile->parsed_clean_title ?? ''));
+                $effectiveReleaseYear = $movieFile->parsed_release_year;
+
+                if ($effectiveCleanTitle === '' || $effectiveReleaseYear === null) {
+                    $parsedFilename = $filenameParser->parse($movieFile->filename);
+
+                    if ($effectiveCleanTitle === '') {
+                        $effectiveCleanTitle = $parsedFilename->cleanTitle;
+                    }
+
+                    if ($effectiveReleaseYear === null) {
+                        $effectiveReleaseYear = $parsedFilename->releaseYear;
+                    }
+                }
+
+                $movieFile->setAttribute('effective_clean_title', $effectiveCleanTitle);
+                $movieFile->setAttribute('effective_release_year', $effectiveReleaseYear);
+
+                return $movieFile;
+            });
 
         return view('movies.unmatched', [
             'files' => $files,

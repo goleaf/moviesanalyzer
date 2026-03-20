@@ -79,6 +79,7 @@ class FilenameParser
         'truehd',
         'atmos',
         'remastered',
+        'flex',
         'yts',
         'mx',
         'rarbg',

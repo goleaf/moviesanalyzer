@@ -16,6 +16,7 @@ it('cleans movie filenames into canonical search titles', function (string $file
     ['[YTS.MX] The Matrix 1999 BluRay.mkv', 'The Matrix', 1999],
     ['The.Matrix.Reloaded.2003.4K.WEBRip.mkv', 'The Matrix Reloaded', 2003],
     ['The.Ritual.Killer.2023.BDRip.1080p_от New-Team_JNS82.mp4', 'The Ritual Killer', 2023],
+    ['Uncharted.2022.1080p.FLEX.mp4', 'Uncharted', 2022],
 ]);
 
 it('adds transliterated cyrillic query variants', function (): void {

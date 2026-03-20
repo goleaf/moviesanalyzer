@@ -34,7 +34,16 @@
                 <tbody>
                 @forelse ($files as $file)
                     <tr class="border-t border-cine" data-unmatched-row="{{ $file->id }}">
-                        <td class="px-4 py-3 font-mono text-xs md:text-sm break-all">{{ $file->filename }}</td>
+                        <td class="px-4 py-3">
+                            <p class="font-mono text-xs md:text-sm break-all">{{ $file->filename }}</p>
+                            <p class="text-[11px] text-muted mt-1">
+                                Parsed:
+                                <span class="text-primary">{{ $file->effective_clean_title }}</span>
+                                @if ($file->effective_release_year)
+                                    <span class="text-muted">({{ $file->effective_release_year }})</span>
+                                @endif
+                            </p>
+                        </td>
                         <td class="px-4 py-3 text-xs text-muted break-all">{{ $file->smb_path }}</td>
                         <td class="px-4 py-3 text-xs">{{ $file->formatted_size }}</td>
                         <td class="px-4 py-3 text-xs uppercase">{{ $file->extension }}</td>
@@ -56,8 +65,8 @@
                                     data-assist-url="{{ route('cineclean.unmatched.google-assist', $file) }}"
                                     data-match-url="{{ route('cineclean.unmatched.match', $file) }}"
                                     data-filename="{{ $file->filename }}"
-                                    data-clean-title="{{ $file->parsed_clean_title }}"
-                                    data-release-year="{{ $file->parsed_release_year }}"
+                                    data-clean-title="{{ $file->effective_clean_title }}"
+                                    data-release-year="{{ $file->effective_release_year }}"
                                 >
                                     Google MCP
                                 </button>
@@ -69,8 +78,8 @@
                                     data-assist-url="{{ route('cineclean.unmatched.google-assist', $file) }}"
                                     data-match-url="{{ route('cineclean.unmatched.match', $file) }}"
                                     data-filename="{{ $file->filename }}"
-                                    data-clean-title="{{ $file->parsed_clean_title }}"
-                                    data-release-year="{{ $file->parsed_release_year }}"
+                                    data-clean-title="{{ $file->effective_clean_title }}"
+                                    data-release-year="{{ $file->effective_release_year }}"
                                 >
                                     Search TMDB manually
                                 </button>
