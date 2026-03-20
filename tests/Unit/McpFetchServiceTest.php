@@ -38,6 +38,12 @@ it('extracts text content from an mcp tool response payload', function (): void 
     $text = app(McpFetchService::class)->fetch('https://www.google.com/search?q=matrix');
 
     expect($text)->toContain('The Matrix (1999)');
+
+    Process::assertRan(function ($process): bool {
+        $path = (string) ($process->environment['PATH'] ?? '');
+
+        return $path !== '' && str_contains($path, '/usr/bin');
+    });
 });
 
 it('throws when mcp command is not configured', function (): void {
@@ -45,6 +51,13 @@ it('throws when mcp command is not configured', function (): void {
 
     expect(fn (): string => app(McpFetchService::class)->fetch('https://www.google.com/search?q=matrix'))
         ->toThrow(RuntimeException::class, 'GOOGLE_ASSIST_MCP_COMMAND');
+});
+
+it('throws a clear error when mcp runner binary is missing', function (): void {
+    config()->set('cineclean.google_assist.mcp_command', 'definitely-missing-mcp-binary fetch');
+
+    expect(fn (): string => app(McpFetchService::class)->fetch('https://www.google.com/search?q=matrix'))
+        ->toThrow(RuntimeException::class, 'required binary "definitely-missing-mcp-binary" was not found');
 });
 
 it('throws when mcp tool response contains an error', function (): void {

@@ -18,7 +18,7 @@ class McpFetchService
             throw new RuntimeException('MCP fetch is not configured. Set GOOGLE_ASSIST_MCP_COMMAND in .env.');
         }
 
-        $command = trim((string) config('cineclean.google_assist.mcp_command', ''));
+        $command = $this->prepareCommand(trim((string) config('cineclean.google_assist.mcp_command', '')));
         $timeout = max(5, (int) config('cineclean.google_assist.mcp_timeout_seconds', 25));
         $input = $this->buildInputPayload($url);
 
@@ -155,12 +155,126 @@ class McpFetchService
         throw new RuntimeException('MCP fetch returned empty text payload.');
     }
 
+    private function prepareCommand(string $command): string
+    {
+        if (! preg_match('/^\s*(?<runner>\S+)(?:\s+(?<rest>.*))?$/u', $command, $matches)) {
+            return $command;
+        }
+
+        $runner = $this->stripWrappingQuotes((string) $matches['runner']);
+        $rest = trim((string) ($matches['rest'] ?? ''));
+
+        if ($runner === '') {
+            return $command;
+        }
+
+        if (str_contains($runner, DIRECTORY_SEPARATOR)) {
+            if (is_file($runner) && is_executable($runner)) {
+                return $command;
+            }
+
+            throw new RuntimeException(sprintf(
+                'MCP fetch command failed: configured executable does not exist or is not executable (%s).',
+                $runner,
+            ));
+        }
+
+        $resolvedRunner = $this->resolveExecutable($runner);
+
+        if ($resolvedRunner === null) {
+            throw new RuntimeException($this->missingBinaryMessage($runner, $command));
+        }
+
+        if ($resolvedRunner === $runner) {
+            return $command;
+        }
+
+        if ($rest === '') {
+            return escapeshellarg($resolvedRunner);
+        }
+
+        return sprintf('%s %s', escapeshellarg($resolvedRunner), $rest);
+    }
+
+    private function stripWrappingQuotes(string $value): string
+    {
+        if (mb_strlen($value, 'UTF-8') < 2) {
+            return $value;
+        }
+
+        $first = mb_substr($value, 0, 1, 'UTF-8');
+        $last = mb_substr($value, -1, 1, 'UTF-8');
+
+        if (($first === '"' && $last === '"') || ($first === "'" && $last === "'")) {
+            return mb_substr($value, 1, mb_strlen($value, 'UTF-8') - 2, 'UTF-8');
+        }
+
+        return $value;
+    }
+
+    private function resolveExecutable(string $binary): ?string
+    {
+        $pathDirectories = array_filter(array_map(
+            'trim',
+            explode(PATH_SEPARATOR, (string) getenv('PATH')),
+        ));
+
+        $candidateDirectories = array_values(array_unique(array_merge(
+            $pathDirectories,
+            [
+                '/opt/homebrew/bin',
+                '/usr/local/bin',
+                '/usr/bin',
+                '/bin',
+                '/opt/bin',
+            ],
+        )));
+
+        foreach ($candidateDirectories as $directory) {
+            $candidate = rtrim($directory, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$binary;
+
+            if (is_file($candidate) && is_executable($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private function missingBinaryMessage(string $binary, string $command): string
+    {
+        $path = (string) getenv('PATH');
+        $baseMessage = sprintf(
+            'MCP fetch command failed: required binary "%s" was not found in PATH. Current command: %s.',
+            $binary,
+            $command,
+        );
+
+        if ($binary === 'uvx') {
+            return sprintf(
+                '%s Install uv (`brew install uv` on macOS or `curl -LsSf https://astral.sh/uv/install.sh | sh` on Linux) and set GOOGLE_ASSIST_MCP_COMMAND to an absolute path, for example: "/opt/homebrew/bin/uvx mcp-server-fetch". PATH="%s".',
+                $baseMessage,
+                $path,
+            );
+        }
+
+        return sprintf('%s PATH="%s".', $baseMessage, $path);
+    }
+
     /**
      * @return array<string, string>
      */
     private function processEnvironment(): array
     {
-        $environment = [];
+        $environment = [
+            'PATH' => $this->buildProcessPath(),
+        ];
+        $home = trim((string) getenv('HOME'));
+
+        if ($home !== '') {
+            $environment['HOME'] = $home;
+        }
+
         $uvBaseDir = trim((string) config('cineclean.google_assist.mcp_uv_cache_dir', ''));
 
         if ($uvBaseDir === '') {
@@ -184,5 +298,26 @@ class McpFetchService
         }
 
         return $environment;
+    }
+
+    private function buildProcessPath(): string
+    {
+        $existingPath = array_filter(array_map(
+            'trim',
+            explode(PATH_SEPARATOR, (string) getenv('PATH')),
+        ));
+
+        $fallbackPath = [
+            '/opt/homebrew/bin',
+            '/usr/local/bin',
+            '/usr/bin',
+            '/bin',
+            '/usr/sbin',
+            '/sbin',
+        ];
+
+        $combined = array_values(array_unique(array_merge($existingPath, $fallbackPath)));
+
+        return implode(PATH_SEPARATOR, $combined);
     }
 }
