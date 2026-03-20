@@ -19,7 +19,7 @@ class StoreFilenameRuleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rule_mode' => ['required', 'string', Rule::in(['replace', 'remove_token'])],
+            'rule_mode' => ['required', 'string', Rule::in(['replace', 'remove_token', 'truncate_after_token'])],
             'pattern' => ['required', 'string', 'max:255'],
             'replacement' => ['nullable', 'string', 'max:255'],
             'is_regex' => ['required', 'boolean'],

@@ -43,3 +43,40 @@ it('applies custom replacement and token removal rules without renaming files', 
         ->and($parsed->releaseYear)->toBe(2022)
         ->and($parsed->searchQueries)->toContain('Movie');
 });
+
+it('uses database token rules instead of hardcoded removals', function (): void {
+    FilenameRule::query()
+        ->where('rule_mode', 'remove_token')
+        ->where('pattern', 'hdrip')
+        ->update(['is_active' => false]);
+
+    app(FilenameRuleService::class)->clearCache();
+
+    $parsed = app(FilenameParser::class)->parse('The.Matrix.1999.HDRip.mkv');
+
+    expect($parsed->cleanTitle)
+        ->toBe('The Matrix Hdrip')
+        ->and($parsed->releaseYear)->toBe(1999);
+});
+
+it('supports truncate_after_token rules configured from interface', function (): void {
+    FilenameRule::query()->create([
+        'rule_mode' => 'truncate_after_token',
+        'pattern' => 'sourcecut',
+        'replacement' => '',
+        'is_regex' => false,
+        'is_case_sensitive' => false,
+        'whole_word' => true,
+        'sort_order' => 5,
+        'is_active' => true,
+        'notes' => 'truncate suffix after source marker',
+    ]);
+
+    app(FilenameRuleService::class)->clearCache();
+
+    $parsed = app(FilenameParser::class)->parse('The.Movie.2022.sourcecut.release.mkv');
+
+    expect($parsed->cleanTitle)
+        ->toBe('The Movie')
+        ->and($parsed->releaseYear)->toBe(2022);
+});

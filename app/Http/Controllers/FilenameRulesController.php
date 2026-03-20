@@ -11,6 +11,7 @@ use App\Services\FilenameRuleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class FilenameRulesController extends Controller
@@ -40,10 +41,25 @@ class FilenameRulesController extends Controller
         $activeRules = FilenameRule::query()->where('is_active', true)->count();
         $replaceRules = FilenameRule::query()->where('rule_mode', 'replace')->count();
         $removeTokenRules = FilenameRule::query()->where('rule_mode', 'remove_token')->count();
+        $truncateAfterTokenRules = FilenameRule::query()->where('rule_mode', 'truncate_after_token')->count();
+
+        /** @var Collection<int, string> $removeTokenTemplates */
+        $removeTokenTemplates = FilenameRule::query()
+            ->select(['pattern'])
+            ->where('rule_mode', 'remove_token')
+            ->where('is_active', true)
+            ->where('is_regex', false)
+            ->where('whole_word', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->limit(160)
+            ->pluck('pattern')
+            ->unique()
+            ->values();
 
         return view('rules.index', [
             'rules' => $rules,
-            'defaultTokens' => FilenameParser::defaultRemovableTokens(),
+            'removeTokenTemplates' => $removeTokenTemplates,
             'previewSample' => $request->string('sample', 'The.Matrix.1999.1080p.BluRay.x264.mkv')->toString(),
             'ruleStats' => [
                 'total' => $totalRules,
@@ -51,6 +67,7 @@ class FilenameRulesController extends Controller
                 'disabled' => max(0, $totalRules - $activeRules),
                 'replace' => $replaceRules,
                 'remove_token' => $removeTokenRules,
+                'truncate_after_token' => $truncateAfterTokenRules,
             ],
         ]);
     }

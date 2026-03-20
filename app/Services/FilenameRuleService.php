@@ -14,17 +14,40 @@ class FilenameRuleService
     public const CACHE_KEY = 'moviesanalyzer.filename_rules.active';
 
     /**
+     * @var Collection<int, FilenameRule>|null
+     */
+    private ?Collection $cachedActiveRules = null;
+
+    /**
+     * @var Collection<int, FilenameRule>|null
+     */
+    private ?Collection $cachedRemoveTokenRules = null;
+
+    /**
+     * @var Collection<int, FilenameRule>|null
+     */
+    private ?Collection $cachedTruncateAfterTokenRules = null;
+
+    /**
      * @return Collection<int, FilenameRule>
      */
     public function activeRules(): Collection
     {
+        if ($this->cachedActiveRules !== null) {
+            return $this->cachedActiveRules;
+        }
+
         if (! $this->canUseFacades()) {
-            return collect();
+            $this->cachedActiveRules = collect();
+
+            return $this->cachedActiveRules;
         }
 
         try {
             if (! Schema::hasTable('filename_rules')) {
-                return collect();
+                $this->cachedActiveRules = collect();
+
+                return $this->cachedActiveRules;
             }
 
             /** @var Collection<int, FilenameRule> $rules */
@@ -47,14 +70,22 @@ class FilenameRuleService
                     ->get();
             });
 
-            return $rules;
+            $this->cachedActiveRules = $rules;
+
+            return $this->cachedActiveRules;
         } catch (Throwable) {
-            return collect();
+            $this->cachedActiveRules = collect();
+
+            return $this->cachedActiveRules;
         }
     }
 
     public function clearCache(): void
     {
+        $this->cachedActiveRules = null;
+        $this->cachedRemoveTokenRules = null;
+        $this->cachedTruncateAfterTokenRules = null;
+
         if (! $this->canUseFacades()) {
             return;
         }
@@ -79,7 +110,22 @@ class FilenameRuleService
             return false;
         }
 
-        foreach ($this->activeRules()->where('rule_mode', 'remove_token') as $rule) {
+        foreach ($this->removeTokenRules() as $rule) {
+            if ($this->tokenMatchesRule($normalizedToken, $rule)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function shouldTruncateAfterToken(string $normalizedToken): bool
+    {
+        if ($normalizedToken === '') {
+            return false;
+        }
+
+        foreach ($this->truncateAfterTokenRules() as $rule) {
             if ($this->tokenMatchesRule($normalizedToken, $rule)) {
                 return true;
             }
@@ -145,5 +191,37 @@ class FilenameRuleService
     private function canUseFacades(): bool
     {
         return Facade::getFacadeApplication() !== null;
+    }
+
+    /**
+     * @return Collection<int, FilenameRule>
+     */
+    private function removeTokenRules(): Collection
+    {
+        if ($this->cachedRemoveTokenRules !== null) {
+            return $this->cachedRemoveTokenRules;
+        }
+
+        $this->cachedRemoveTokenRules = $this->activeRules()
+            ->where('rule_mode', 'remove_token')
+            ->values();
+
+        return $this->cachedRemoveTokenRules;
+    }
+
+    /**
+     * @return Collection<int, FilenameRule>
+     */
+    private function truncateAfterTokenRules(): Collection
+    {
+        if ($this->cachedTruncateAfterTokenRules !== null) {
+            return $this->cachedTruncateAfterTokenRules;
+        }
+
+        $this->cachedTruncateAfterTokenRules = $this->activeRules()
+            ->where('rule_mode', 'truncate_after_token')
+            ->values();
+
+        return $this->cachedTruncateAfterTokenRules;
     }
 }

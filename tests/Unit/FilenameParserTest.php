@@ -1,10 +1,13 @@
 <?php
 
 use App\Services\FilenameParser;
-use App\Services\FilenameRuleService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+uses(TestCase::class, RefreshDatabase::class);
 
 it('cleans movie filenames into canonical search titles', function (string $filename, string $expectedTitle, ?int $expectedYear): void {
-    $parsed = (new FilenameParser(new FilenameRuleService))->parse($filename);
+    $parsed = app(FilenameParser::class)->parse($filename);
 
     expect($parsed->cleanTitle)->toBe($expectedTitle)
         ->and($parsed->releaseYear)->toBe($expectedYear);
@@ -24,7 +27,7 @@ it('cleans movie filenames into canonical search titles', function (string $file
 ]);
 
 it('adds transliterated cyrillic query variants', function (): void {
-    $parsed = (new FilenameParser(new FilenameRuleService))->parse('матрица.avi');
+    $parsed = app(FilenameParser::class)->parse('матрица.avi');
 
     expect($parsed->searchQueries)
         ->toContain('матрица')

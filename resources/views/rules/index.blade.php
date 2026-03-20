@@ -17,7 +17,7 @@
                     Back to Unmatched
                 </a>
             </div>
-            <div class="mt-5 grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div class="mt-5 grid grid-cols-2 lg:grid-cols-6 gap-3">
                 <div class="rounded-xl border border-cine bg-black/30 px-4 py-3">
                     <p class="text-[11px] uppercase tracking-wide text-muted">Total Rules</p>
                     <p class="text-xl font-semibold mt-1">{{ number_format($ruleStats['total']) }}</p>
@@ -37,6 +37,10 @@
                 <div class="rounded-xl border border-amber-500/30 bg-amber-900/10 px-4 py-3">
                     <p class="text-[11px] uppercase tracking-wide text-muted">Remove Token Rules</p>
                     <p class="text-xl font-semibold mt-1 text-amber-200">{{ number_format($ruleStats['remove_token']) }}</p>
+                </div>
+                <div class="rounded-xl border border-rose-500/30 bg-rose-900/10 px-4 py-3">
+                    <p class="text-[11px] uppercase tracking-wide text-muted">Truncate Rules</p>
+                    <p class="text-xl font-semibold mt-1 text-rose-200">{{ number_format($ruleStats['truncate_after_token']) }}</p>
                 </div>
             </div>
         </div>
@@ -109,13 +113,16 @@
                             <button type="button" class="rule-template text-xs px-2 py-1 rounded-full border border-cine bg-black/30 hover:bg-white/5" data-mode="replace" data-pattern="-" data-replacement=" " data-notes="Replace hyphen with space">
                                 Hyphen → Space
                             </button>
+                            <button type="button" class="rule-template text-xs px-2 py-1 rounded-full border border-cine bg-black/30 hover:bg-white/5" data-mode="truncate_after_token" data-pattern="от" data-replacement="" data-notes="Truncate trailing source text after token">
+                                Truncate At `от`
+                            </button>
                         </div>
                     </div>
 
                     <div>
-                        <p class="text-[11px] uppercase tracking-wide text-muted mb-2">Default Remove Tokens</p>
+                        <p class="text-[11px] uppercase tracking-wide text-muted mb-2">Remove Token Templates (from active rules)</p>
                         <div class="flex flex-wrap gap-2 max-h-44 overflow-auto pr-1">
-                            @foreach ($defaultTokens as $token)
+                            @foreach ($removeTokenTemplates as $token)
                                 <button type="button" class="token-chip text-xs px-2 py-1 rounded-full border border-cine bg-black/30 hover:bg-white/5" data-token="{{ $token }}">{{ $token }}</button>
                             @endforeach
                         </div>
@@ -132,6 +139,8 @@
                     updates filename text (example: `.` to space).
                     <span class="inline-block rounded-md border border-amber-500/40 bg-amber-900/20 px-2 py-0.5 text-[11px] text-amber-200 mx-1">remove_token</span>
                     removes matched tags such as `hdrip`.
+                    <span class="inline-block rounded-md border border-rose-500/40 bg-rose-900/20 px-2 py-0.5 text-[11px] text-rose-200 mx-1">truncate_after_token</span>
+                    stops parsing from matched token to filename end.
                 </p>
             </div>
 
@@ -142,6 +151,7 @@
                     <select id="add-rule-mode" name="rule_mode" class="mt-1 w-full rounded-lg border border-cine bg-black/30 px-3 py-2">
                         <option value="replace">replace</option>
                         <option value="remove_token">remove_token</option>
+                        <option value="truncate_after_token">truncate_after_token</option>
                     </select>
                 </div>
 
@@ -206,6 +216,7 @@
                     <option value="all">All modes</option>
                     <option value="replace">replace</option>
                     <option value="remove_token">remove_token</option>
+                    <option value="truncate_after_token">truncate_after_token</option>
                 </select>
                 <select id="rules-status-filter" class="rounded-lg border border-cine bg-black/30 px-3 py-2 text-sm">
                     <option value="all">All statuses</option>
@@ -243,7 +254,7 @@
                         data-search="{{ $searchBlob }}"
                     >
                         <td class="px-4 py-3 text-xs">
-                            <span class="inline-flex px-2 py-1 rounded-full border {{ $rule->rule_mode === 'replace' ? 'border-sky-500/40 bg-sky-900/20 text-sky-200' : 'border-amber-500/40 bg-amber-900/20 text-amber-200' }}">
+                            <span class="inline-flex px-2 py-1 rounded-full border {{ $rule->rule_mode === 'replace' ? 'border-sky-500/40 bg-sky-900/20 text-sky-200' : ($rule->rule_mode === 'truncate_after_token' ? 'border-rose-500/40 bg-rose-900/20 text-rose-200' : 'border-amber-500/40 bg-amber-900/20 text-amber-200') }}">
                                 {{ $rule->rule_mode }}
                             </span>
                         </td>
@@ -293,6 +304,7 @@
                                 <select name="rule_mode" class="rounded-lg border border-cine bg-black/30 px-2 py-1">
                                     <option value="replace" @selected($rule->rule_mode === 'replace')>replace</option>
                                     <option value="remove_token" @selected($rule->rule_mode === 'remove_token')>remove_token</option>
+                                    <option value="truncate_after_token" @selected($rule->rule_mode === 'truncate_after_token')>truncate_after_token</option>
                                 </select>
                                 <input name="pattern" type="text" value="{{ $rule->pattern }}" class="rounded-lg border border-cine bg-black/30 px-2 py-1">
                                 <input name="replacement" type="text" value="{{ $rule->replacement }}" class="rounded-lg border border-cine bg-black/30 px-2 py-1">
@@ -366,13 +378,13 @@
                 .replaceAll("'", '&#039;');
 
             const updateReplacementState = () => {
-                const isRemoveToken = modeInput.value === 'remove_token';
-                replacementInput.disabled = isRemoveToken;
+                const isReplace = modeInput.value === 'replace';
+                replacementInput.disabled = !isReplace;
 
-                if (isRemoveToken) {
+                if (!isReplace) {
                     replacementInput.value = '';
-                    replacementInput.placeholder = 'Not used for remove_token';
-                    replacementHelp.textContent = 'Disabled because remove_token removes the matched token.';
+                    replacementInput.placeholder = `Not used for ${modeInput.value}`;
+                    replacementHelp.textContent = 'Disabled because only replace rules use a replacement value.';
                 } else {
                     replacementInput.placeholder = 'Space or empty string';
                     replacementHelp.textContent = 'Used only for `replace` rules.';

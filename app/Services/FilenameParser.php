@@ -45,50 +45,6 @@ class FilenameParser
         'я' => 'ya',
     ];
 
-    /**
-     * @var array<int, string>
-     */
-    private const REMOVABLE_TOKENS = [
-        '4k',
-        '2160p',
-        '1080p',
-        '720p',
-        '480p',
-        'hdrip',
-        'bluray',
-        'bdrip',
-        'webrip',
-        'webdl',
-        'dvdrip',
-        'camrip',
-        'hdtv',
-        'pdtv',
-        'brrip',
-        'x264',
-        'x265',
-        'hevc',
-        'avc',
-        'xvid',
-        'divx',
-        'h264',
-        'h265',
-        'ac3',
-        'dts',
-        'aac',
-        'mp3',
-        'truehd',
-        'atmos',
-        'remastered',
-        'amzn',
-        'sdr',
-        'selezen',
-        'd',
-        'flex',
-        'yts',
-        'mx',
-        'rarbg',
-    ];
-
     public function __construct(private FilenameRuleService $filenameRuleService) {}
 
     public function parse(string $filename): ParsedFilename
@@ -118,7 +74,7 @@ class FilenameParser
                 continue;
             }
 
-            if ($this->shouldStopAtReleaseSuffix($normalizedToken, count($cleanTokens), $releaseYear, $hasTechnicalTokens)) {
+            if ($this->shouldTruncateParsing($normalizedToken, count($cleanTokens), $releaseYear, $hasTechnicalTokens)) {
                 break;
             }
 
@@ -162,12 +118,7 @@ class FilenameParser
 
     private function normalizeBaseName(string $baseName): string
     {
-        $normalizedCodecs = preg_replace('/\bH[\s._-]?26([45])\b/iu', 'H26$1', $baseName) ?? $baseName;
-        $normalizedAudio = preg_replace('/\bDDP?5[\s._-]?1\b/iu', 'DDP51', $normalizedCodecs) ?? $normalizedCodecs;
-        $withoutBrackets = preg_replace('/\[[^\]]*]|\([^\)]*\)/u', ' ', $normalizedAudio) ?? $normalizedAudio;
-        $withSpacing = preg_replace('/[._-]+/u', ' ', $withoutBrackets) ?? $withoutBrackets;
-
-        return trim(preg_replace('/\s+/u', ' ', $withSpacing) ?? $withSpacing);
+        return trim(preg_replace('/\s+/u', ' ', $baseName) ?? $baseName);
     }
 
     private function moveTrailingArticle(string $value): string
@@ -207,43 +158,7 @@ class FilenameParser
 
     private function isDisposableToken(string $token): bool
     {
-        if (in_array($token, self::REMOVABLE_TOKENS, true)) {
-            return true;
-        }
-
-        if ($this->filenameRuleService->shouldRemoveToken($token)) {
-            return true;
-        }
-
-        if (preg_match('/^\d{3,4}p$/', $token)) {
-            return true;
-        }
-
-        if (preg_match('/^(web|dl)$/', $token)) {
-            return true;
-        }
-
-        if (preg_match('/^dd5(?:1)?$/', $token)) {
-            return true;
-        }
-
-        if (preg_match('/^ddp\d{1,2}$/', $token)) {
-            return true;
-        }
-
-        if (preg_match('/^(s\d{1,2}e\d{1,2}|cd\d)$/', $token)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    public static function defaultRemovableTokens(): array
-    {
-        return self::REMOVABLE_TOKENS;
+        return $this->filenameRuleService->shouldRemoveToken($token);
     }
 
     private function formatToken(string $token): string
@@ -267,17 +182,17 @@ class FilenameParser
         return trim(preg_replace('/\s+/u', ' ', strtr($normalized, self::CYRILLIC_MAP)) ?? '');
     }
 
-    private function shouldStopAtReleaseSuffix(
+    private function shouldTruncateParsing(
         string $normalizedToken,
         int $cleanTokenCount,
         ?int $releaseYear,
         bool $hasTechnicalTokens,
     ): bool {
-        if ($cleanTokenCount < 2) {
+        if (! $this->filenameRuleService->shouldTruncateAfterToken($normalizedToken)) {
             return false;
         }
 
-        if ($normalizedToken !== 'от') {
+        if ($cleanTokenCount < 2) {
             return false;
         }
 
