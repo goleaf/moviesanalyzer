@@ -79,6 +79,10 @@ class FilenameParser
         'truehd',
         'atmos',
         'remastered',
+        'amzn',
+        'sdr',
+        'selezen',
+        'd',
         'flex',
         'yts',
         'mx',
@@ -90,10 +94,14 @@ class FilenameParser
     public function parse(string $filename): ParsedFilename
     {
         $baseName = pathinfo($filename, PATHINFO_FILENAME);
+        $releaseYear = $this->extractReleaseYear($baseName);
         $normalized = $this->normalizeBaseName($baseName);
         $normalized = $this->filenameRuleService->applyReplacementRules($normalized);
         $normalized = $this->moveTrailingArticle($normalized);
-        $releaseYear = $this->extractReleaseYear($normalized);
+
+        if ($releaseYear === null) {
+            $releaseYear = $this->extractReleaseYear($normalized);
+        }
 
         $tokens = preg_split('/\s+/u', $normalized) ?: [];
         $cleanTokens = [];
@@ -154,7 +162,9 @@ class FilenameParser
 
     private function normalizeBaseName(string $baseName): string
     {
-        $withoutBrackets = preg_replace('/\[[^\]]*]|\([^\)]*\)/u', ' ', $baseName) ?? $baseName;
+        $normalizedCodecs = preg_replace('/\bH[\s._-]?26([45])\b/iu', 'H26$1', $baseName) ?? $baseName;
+        $normalizedAudio = preg_replace('/\bDDP?5[\s._-]?1\b/iu', 'DDP51', $normalizedCodecs) ?? $normalizedCodecs;
+        $withoutBrackets = preg_replace('/\[[^\]]*]|\([^\)]*\)/u', ' ', $normalizedAudio) ?? $normalizedAudio;
         $withSpacing = preg_replace('/[._-]+/u', ' ', $withoutBrackets) ?? $withoutBrackets;
 
         return trim(preg_replace('/\s+/u', ' ', $withSpacing) ?? $withSpacing);
@@ -214,6 +224,10 @@ class FilenameParser
         }
 
         if (preg_match('/^dd5(?:1)?$/', $token)) {
+            return true;
+        }
+
+        if (preg_match('/^ddp\d{1,2}$/', $token)) {
             return true;
         }
 
