@@ -21,7 +21,10 @@
         </div>
 
         @forelse ($groups as $group)
-            <article class="card overflow-hidden {{ $group['uncertain'] ? 'border-l-4 border-l-amber-500' : '' }}">
+            <article
+                class="card overflow-hidden {{ $group['uncertain'] ? 'border-l-4 border-l-amber-500' : '' }}"
+                data-duplicate-group="{{ $group['tmdb_id'] }}"
+            >
                 <div class="p-6 grid grid-cols-1 lg:grid-cols-[180px_1fr] gap-6">
                     <div>
                         @if ($group['poster_url'])
@@ -73,11 +76,18 @@
                 </div>
             </article>
         @empty
-            <div class="card p-8 text-center">
+            <div id="duplicates-empty-state" class="card p-8 text-center">
                 <p class="font-cinema text-2xl">No duplicates found yet.</p>
                 <p class="text-muted mt-2">Run a scan and matched files will appear here.</p>
             </div>
         @endforelse
+
+        @if ($groups->isNotEmpty())
+            <div id="duplicates-empty-state" class="card p-8 text-center hidden">
+                <p class="font-cinema text-2xl">No duplicates found yet.</p>
+                <p class="text-muted mt-2">Run a scan and matched files will appear here.</p>
+            </div>
+        @endif
     </section>
 
     <div id="delete-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-4">
@@ -145,9 +155,37 @@
 
                     const row = document.querySelector(`[data-file-row="${pendingTarget.dataset.id}"]`);
                     if (row) {
+                        const groupElement = row.closest('[data-duplicate-group]');
+                        const rowsContainer = row.closest('tbody');
+
                         row.style.transition = 'opacity .3s ease';
                         row.style.opacity = '0';
-                        setTimeout(() => row.remove(), 300);
+
+                        setTimeout(() => {
+                            row.remove();
+
+                            if (!groupElement || !rowsContainer) {
+                                return;
+                            }
+
+                            const remainingRows = rowsContainer.querySelectorAll('[data-file-row]').length;
+
+                            if (remainingRows <= 1) {
+                                groupElement.style.transition = 'opacity .3s ease';
+                                groupElement.style.opacity = '0';
+
+                                setTimeout(() => {
+                                    groupElement.remove();
+
+                                    const remainingGroups = document.querySelectorAll('[data-duplicate-group]').length;
+                                    const emptyState = document.getElementById('duplicates-empty-state');
+
+                                    if (remainingGroups === 0 && emptyState) {
+                                        emptyState.classList.remove('hidden');
+                                    }
+                                }, 300);
+                            }
+                        }, 300);
                     }
 
                     window.MoviesAnalyzer.toast('File deleted from SMB share.', 'success');
