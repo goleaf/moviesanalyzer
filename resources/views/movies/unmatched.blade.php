@@ -57,6 +57,7 @@
                                     data-match-url="{{ route('cineclean.unmatched.match', $file) }}"
                                     data-filename="{{ $file->filename }}"
                                     data-clean-title="{{ $file->parsed_clean_title }}"
+                                    data-release-year="{{ $file->parsed_release_year }}"
                                 >
                                     Google MCP
                                 </button>
@@ -69,6 +70,7 @@
                                     data-match-url="{{ route('cineclean.unmatched.match', $file) }}"
                                     data-filename="{{ $file->filename }}"
                                     data-clean-title="{{ $file->parsed_clean_title }}"
+                                    data-release-year="{{ $file->parsed_release_year }}"
                                 >
                                     Search TMDB manually
                                 </button>
@@ -233,6 +235,7 @@
                     searchUrl: button.dataset.searchUrl,
                     assistUrl: button.dataset.assistUrl,
                     matchUrl: button.dataset.matchUrl,
+                    releaseYear: button.dataset.releaseYear ? Number(button.dataset.releaseYear) : null,
                 };
 
                 queryInput.value = button.dataset.cleanTitle || guessTitle(button.dataset.filename || '');
@@ -369,7 +372,10 @@
                         'X-CSRF-TOKEN': window.MoviesAnalyzer.csrf,
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify({ query: queryInput.value }),
+                    body: JSON.stringify({
+                        query: queryInput.value,
+                        year: activeContext.releaseYear,
+                    }),
                 });
 
                 const payload = await response.json();

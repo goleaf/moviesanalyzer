@@ -42,7 +42,11 @@ class GoogleMovieResearchService
 
         [$googleResults, $message] = $this->searchGoogle($query);
         $titleSuggestions = $this->extractTitleSuggestions($googleResults, $parsedFilename);
-        $tmdbCandidates = $this->buildTmdbCandidates($titleSuggestions, $googleResults);
+        $tmdbCandidates = $this->buildTmdbCandidates(
+            $titleSuggestions,
+            $googleResults,
+            $parsedFilename->releaseYear,
+        );
 
         return [
             'enabled' => $this->isConfigured(),
@@ -401,7 +405,7 @@ class GoogleMovieResearchService
      * }>  $googleResults
      * @return array<int, array<string, float|int|string|null>>
      */
-    private function buildTmdbCandidates(array $titleSuggestions, array $googleResults): array
+    private function buildTmdbCandidates(array $titleSuggestions, array $googleResults, ?int $releaseYear): array
     {
         $maxSuggestionQueries = max(1, (int) config('cineclean.google_assist.max_suggestion_queries', 3));
         $maxCandidates = max(1, (int) config('cineclean.google_assist.max_tmdb_candidates', 15));
@@ -421,7 +425,7 @@ class GoogleMovieResearchService
         }
 
         foreach (array_slice($titleSuggestions, 0, $maxSuggestionQueries) as $title) {
-            foreach ($this->tmdbService->searchCandidates($title) as $candidate) {
+            foreach ($this->tmdbService->searchCandidates($title, $releaseYear) as $candidate) {
                 if (! isset($candidate['tmdb_id'])) {
                     continue;
                 }

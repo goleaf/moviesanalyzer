@@ -19,6 +19,7 @@ class ManualTmdbSearchRequest extends FormRequest
     {
         return [
             'query' => ['required', 'string', 'max:255'],
+            'year' => ['nullable', 'integer', 'between:1900,2099'],
         ];
     }
 }

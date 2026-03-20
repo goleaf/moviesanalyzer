@@ -11,6 +11,7 @@ use App\Http\Requests\ManualTmdbSearchRequest;
 use App\Http\Requests\RescanUnmatchedRequest;
 use App\Http\Requests\SkipMovieRequest;
 use App\Models\MovieFile;
+use App\Services\FilenameParser;
 use App\Services\GoogleMovieResearchService;
 use App\Services\MovieLibraryService;
 use App\Services\TmdbService;
@@ -47,6 +48,7 @@ class MoviesController extends Controller
                 'file_size_bytes',
                 'extension',
                 'parsed_clean_title',
+                'parsed_release_year',
                 'tmdb_id',
                 'match_status',
                 'match_confidence',
@@ -100,13 +102,19 @@ class MoviesController extends Controller
     public function searchManual(
         ManualTmdbSearchRequest $request,
         MovieFile $movieFile,
+        FilenameParser $filenameParser,
         TmdbService $tmdbService,
     ): JsonResponse {
         $query = $request->string('query')->toString();
+        $requestYear = $request->integer('year');
+        $filenameYear = $movieFile->parsed_release_year
+            ?? $filenameParser->parse($movieFile->filename)->releaseYear;
+        $searchYear = $requestYear > 0 ? $requestYear : $filenameYear;
 
         return response()->json([
             'movie_file_id' => $movieFile->id,
-            'data' => $tmdbService->searchCandidates($query),
+            'search_year' => $searchYear,
+            'data' => $tmdbService->searchCandidates($query, $searchYear),
         ]);
     }
 

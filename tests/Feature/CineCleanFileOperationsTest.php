@@ -56,7 +56,7 @@ it('searches and applies manual tmdb matches for unmatched files', function (): 
     $tmdbService = Mockery::mock(TmdbService::class);
     $tmdbService->shouldReceive('searchCandidates')
         ->once()
-        ->with('The Matrix')
+        ->with('The Matrix', null)
         ->andReturn([
             [
                 'tmdb_id' => 603,
@@ -100,6 +100,44 @@ it('searches and applies manual tmdb matches for unmatched files', function (): 
         ->and($movieFile->tmdb_id)->toBe(603)
         ->and($movieFile->tmdb_title)->toBe('The Matrix')
         ->and($movieFile->movie_year)->toBe(1999);
+});
+
+it('uses filename year as tmdb search parameter in manual search', function (): void {
+    $movieFile = MovieFile::query()->create([
+        'smb_path' => 'Movies/The.Matrix.1999.BluRay.mkv',
+        'filename' => 'The.Matrix.1999.BluRay.mkv',
+        'file_size_bytes' => 1_400_000_000,
+        'extension' => 'mkv',
+        'parsed_release_year' => null,
+        'match_status' => 'unmatched',
+        'scanned_at' => now(),
+    ]);
+
+    $tmdbService = Mockery::mock(TmdbService::class);
+    $tmdbService->shouldReceive('searchCandidates')
+        ->once()
+        ->with('The Matrix', 1999)
+        ->andReturn([
+            [
+                'tmdb_id' => 603,
+                'title' => 'The Matrix',
+                'original_title' => 'The Matrix',
+                'release_year' => 1999,
+                'poster_path' => '/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg',
+                'overview' => 'A hacker discovers reality is a simulation.',
+                'vote_average' => 8.2,
+                'tmdb_url' => 'https://www.themoviedb.org/movie/603',
+            ],
+        ]);
+
+    $this->app->instance(TmdbService::class, $tmdbService);
+
+    $this->postJson(route('cineclean.unmatched.search', $movieFile), [
+        'query' => 'The Matrix',
+    ])
+        ->assertSuccessful()
+        ->assertJsonPath('search_year', 1999)
+        ->assertJsonCount(1, 'data');
 });
 
 it('marks unmatched files as skipped when user chooses skip', function (): void {

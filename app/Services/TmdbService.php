@@ -22,13 +22,25 @@ class TmdbService
     {
         $candidates = collect();
         $preferredLanguage = $this->preferredLanguage();
+        $searchYear = $this->normalizeSearchYear($parsedFilename->releaseYear);
 
         foreach ($parsedFilename->searchQueries as $query) {
-            $primaryResults = $this->searchMovie($query, $preferredLanguage);
+            $primaryResults = $this->searchMovie($query, $preferredLanguage, $searchYear);
+
+            if ($primaryResults === [] && $searchYear !== null) {
+                $primaryResults = $this->searchMovie($query, $preferredLanguage, null);
+            }
+
             $candidates = $candidates->merge($primaryResults);
 
             if ($primaryResults === [] && $preferredLanguage !== self::FALLBACK_LANGUAGE) {
-                $candidates = $candidates->merge($this->searchMovie($query, self::FALLBACK_LANGUAGE));
+                $fallbackResults = $this->searchMovie($query, self::FALLBACK_LANGUAGE, $searchYear);
+
+                if ($fallbackResults === [] && $searchYear !== null) {
+                    $fallbackResults = $this->searchMovie($query, self::FALLBACK_LANGUAGE, null);
+                }
+
+                $candidates = $candidates->merge($fallbackResults);
             }
         }
 
@@ -75,13 +87,22 @@ class TmdbService
     /**
      * @return array<int, array<string, float|int|string|null>>
      */
-    public function searchCandidates(string $query): array
+    public function searchCandidates(string $query, ?int $year = null): array
     {
         $preferredLanguage = $this->preferredLanguage();
-        $primary = $this->searchMovie($query, $preferredLanguage);
+        $searchYear = $this->normalizeSearchYear($year);
+        $primary = $this->searchMovie($query, $preferredLanguage, $searchYear);
+
+        if ($primary === [] && $searchYear !== null) {
+            $primary = $this->searchMovie($query, $preferredLanguage, null);
+        }
 
         if ($primary === [] && $preferredLanguage !== self::FALLBACK_LANGUAGE) {
-            $primary = $this->searchMovie($query, self::FALLBACK_LANGUAGE);
+            $primary = $this->searchMovie($query, self::FALLBACK_LANGUAGE, $searchYear);
+
+            if ($primary === [] && $searchYear !== null) {
+                $primary = $this->searchMovie($query, self::FALLBACK_LANGUAGE, null);
+            }
         }
 
         return $this->localizeCandidates($primary, $preferredLanguage);
@@ -124,21 +145,33 @@ class TmdbService
     /**
      * @return array<int, array<string, float|int|string|null>>
      */
-    private function searchMovie(string $query, string $language): array
+    private function searchMovie(string $query, string $language, ?int $year = null): array
     {
-        $cacheKey = sprintf('cineclean.tmdb.search.%s.%s', $language, sha1(mb_strtolower($query, 'UTF-8')));
+        $searchYear = $this->normalizeSearchYear($year);
+        $cacheKey = sprintf(
+            'cineclean.tmdb.search.%s.%s.%s',
+            $language,
+            $searchYear ?? 'all-years',
+            sha1(mb_strtolower($query, 'UTF-8')),
+        );
         $ttl = now()->addDays((int) config('cineclean.tmdb.cache_days', 7));
 
         /** @var array<int, array<string, mixed>> $results */
-        $results = Cache::remember($cacheKey, $ttl, function () use ($query, $language): array {
+        $results = Cache::remember($cacheKey, $ttl, function () use ($query, $language, $searchYear): array {
             $this->throttle();
+
+            $params = [
+                'query' => $query,
+                'language' => $language,
+            ];
+
+            if ($searchYear !== null) {
+                $params['year'] = $searchYear;
+            }
 
             $response = $this->tmdbRequest()->get(
                 sprintf('%s/search/movie', rtrim((string) config('cineclean.tmdb.base_url'), '/')),
-                [
-                    'query' => $query,
-                    'language' => $language,
-                ],
+                $params,
             );
 
             if (! $response->successful()) {
@@ -151,6 +184,15 @@ class TmdbService
         });
 
         return array_values(array_filter(array_map(fn (array $movie): ?array => $this->normalizeMovie($movie), $results)));
+    }
+
+    private function normalizeSearchYear(?int $year): ?int
+    {
+        if ($year === null) {
+            return null;
+        }
+
+        return $year >= 1900 && $year <= 2099 ? $year : null;
     }
 
     private function tmdbRequest(): PendingRequest
