@@ -27,7 +27,6 @@ Route::middleware(['web'])
         Route::post('/parser-rules/preview', [FilenameRulesController::class, 'preview'])->name('rules.preview');
 
         Route::post('/unmatched/{movieFile}/search', [MoviesController::class, 'searchManual'])->name('unmatched.search');
-        Route::post('/unmatched/{movieFile}/google-assist', [MoviesController::class, 'googleAssist'])->name('unmatched.google-assist');
         Route::post('/unmatched/{movieFile}/refresh', [MoviesController::class, 'refreshUnmatchedMovie'])->name('unmatched.refresh');
         Route::patch('/unmatched/{movieFile}/match', [MoviesController::class, 'applyManualMatch'])->name('unmatched.match');
         Route::patch('/unmatched/{movieFile}/skip', [MoviesController::class, 'skip'])->name('unmatched.skip');

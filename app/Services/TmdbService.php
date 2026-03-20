@@ -8,6 +8,9 @@ use App\Enums\MatchStatus;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
+use Throwable;
 
 class TmdbService
 {
@@ -18,8 +21,17 @@ class TmdbService
      */
     private array $requestTimestamps = [];
 
+    private bool $mcpUnavailableForRuntime = false;
+
+    public function __construct(
+        private McpTmdbService $mcpTmdbService,
+        private FilenameParser $filenameParser,
+    ) {}
+
     public function match(ParsedFilename $parsedFilename): TmdbMatch
     {
+        $this->assertProviderConfiguration();
+
         $candidates = collect();
         $preferredLanguage = $this->preferredLanguage();
         $searchYear = $this->normalizeSearchYear($parsedFilename->releaseYear);
@@ -89,23 +101,39 @@ class TmdbService
      */
     public function searchCandidates(string $query, ?int $year = null): array
     {
+        $this->assertProviderConfiguration();
+
         $preferredLanguage = $this->preferredLanguage();
-        $searchYear = $this->normalizeSearchYear($year);
-        $primary = $this->searchMovie($query, $preferredLanguage, $searchYear);
+        $parsedSearchInput = $this->filenameParser->parseSearchInput($query);
+        $searchYear = $this->normalizeSearchYear($year ?? $parsedSearchInput->releaseYear);
+        $searchQueries = $this->searchQueriesFromInput($query, $parsedSearchInput);
+        $candidates = collect();
 
-        if ($primary === [] && $searchYear !== null) {
-            $primary = $this->searchMovie($query, $preferredLanguage, null);
-        }
-
-        if ($primary === [] && $preferredLanguage !== self::FALLBACK_LANGUAGE) {
-            $primary = $this->searchMovie($query, self::FALLBACK_LANGUAGE, $searchYear);
+        foreach ($searchQueries as $searchQuery) {
+            $primary = $this->searchMovie($searchQuery, $preferredLanguage, $searchYear);
 
             if ($primary === [] && $searchYear !== null) {
-                $primary = $this->searchMovie($query, self::FALLBACK_LANGUAGE, null);
+                $primary = $this->searchMovie($searchQuery, $preferredLanguage, null);
             }
+
+            if ($primary === [] && $preferredLanguage !== self::FALLBACK_LANGUAGE) {
+                $primary = $this->searchMovie($searchQuery, self::FALLBACK_LANGUAGE, $searchYear);
+
+                if ($primary === [] && $searchYear !== null) {
+                    $primary = $this->searchMovie($searchQuery, self::FALLBACK_LANGUAGE, null);
+                }
+            }
+
+            $candidates = $candidates->merge($primary);
         }
 
-        return $this->localizeCandidates($primary, $preferredLanguage);
+        $uniqueCandidates = $candidates
+            ->filter(fn (array $candidate): bool => isset($candidate['tmdb_id']))
+            ->keyBy('tmdb_id')
+            ->values()
+            ->all();
+
+        return $this->localizeCandidates($uniqueCandidates, $preferredLanguage);
     }
 
     /**
@@ -113,39 +141,88 @@ class TmdbService
      */
     public function findMovieById(int $tmdbId, ?string $language = null): ?array
     {
+        $this->assertProviderConfiguration();
+
         $language = $language ?: $this->preferredLanguage();
-        $cacheKey = sprintf('cineclean.tmdb.movie.%s.%d', $language, $tmdbId);
-        $ttl = now()->addDays((int) config('cineclean.tmdb.cache_days', 7));
 
-        /** @var array<string, mixed>|null $movie */
-        $movie = Cache::remember($cacheKey, $ttl, function () use ($tmdbId, $language): ?array {
-            $this->throttle();
+        if ($this->shouldAttemptMcpProvider()) {
+            try {
+                $movie = $this->findMovieByIdViaMcp($tmdbId, $language);
 
-            $response = $this->tmdbRequest()->get(
-                sprintf('%s/movie/%d', rtrim((string) config('cineclean.tmdb.base_url'), '/'), $tmdbId),
-                ['language' => $language],
-            );
+                if ($movie !== null || ! $this->shouldUseHttpFallback()) {
+                    return $movie;
+                }
+            } catch (Throwable $exception) {
+                if (! $this->shouldUseHttpFallback()) {
+                    throw $exception;
+                }
 
-            if (! $response->successful()) {
-                return null;
+                $this->disableMcpForRuntime($exception);
             }
+        }
 
-            $payload = $response->json();
+        if (! $this->shouldUseHttpProvider()) {
+            return null;
+        }
 
-            if (! is_array($payload)) {
-                return null;
-            }
-
-            return $this->normalizeMovie($payload);
-        });
-
-        return $movie;
+        return $this->findMovieByIdViaHttp($tmdbId, $language);
     }
 
     /**
      * @return array<int, array<string, float|int|string|null>>
      */
     private function searchMovie(string $query, string $language, ?int $year = null): array
+    {
+        if ($this->shouldAttemptMcpProvider()) {
+            try {
+                $movies = $this->searchMovieViaMcp($query, $language, $year);
+
+                if ($movies !== [] || ! $this->shouldUseHttpFallback()) {
+                    return $movies;
+                }
+            } catch (Throwable $exception) {
+                if (! $this->shouldUseHttpFallback()) {
+                    throw $exception;
+                }
+
+                $this->disableMcpForRuntime($exception);
+            }
+        }
+
+        if (! $this->shouldUseHttpProvider()) {
+            return [];
+        }
+
+        return $this->searchMovieViaHttp($query, $language, $year);
+    }
+
+    /**
+     * @return array<int, array<string, float|int|string|null>>
+     */
+    private function searchMovieViaMcp(string $query, string $language, ?int $year = null): array
+    {
+        $searchYear = $this->normalizeSearchYear($year);
+        $cacheKey = sprintf(
+            'cineclean.tmdb.mcp.search.%s.%s.%s.%s',
+            sha1((string) config('cineclean.tmdb.mcp_command', '')),
+            $language,
+            $searchYear ?? 'all-years',
+            sha1(mb_strtolower($query, 'UTF-8')),
+        );
+        $ttl = now()->addDays((int) config('cineclean.tmdb.cache_days', 7));
+
+        /** @var array<int, array<string, float|int|string|null>> $movies */
+        $movies = Cache::remember($cacheKey, $ttl, function () use ($query, $language, $searchYear): array {
+            return $this->mcpTmdbService->searchMovies($query, $language, $searchYear);
+        });
+
+        return $movies;
+    }
+
+    /**
+     * @return array<int, array<string, float|int|string|null>>
+     */
+    private function searchMovieViaHttp(string $query, string $language, ?int $year = null): array
     {
         $searchYear = $this->normalizeSearchYear($year);
         $cacheKey = sprintf(
@@ -193,6 +270,133 @@ class TmdbService
         }
 
         return $year >= 1900 && $year <= 2099 ? $year : null;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function searchQueriesFromInput(string $query, ParsedFilename $parsedFilename): array
+    {
+        $queries = array_merge(
+            [$query, $parsedFilename->cleanTitle, $parsedFilename->baseName],
+            $parsedFilename->searchQueries,
+        );
+
+        $normalized = array_values(array_unique(array_filter(array_map(
+            static fn (string $value): string => trim($value),
+            $queries,
+        ))));
+
+        return array_slice($normalized, 0, 6);
+    }
+
+    /**
+     * @return array<string, float|int|string|null>|null
+     */
+    private function findMovieByIdViaMcp(int $tmdbId, string $language): ?array
+    {
+        $cacheKey = sprintf(
+            'cineclean.tmdb.mcp.movie.%s.%s.%d',
+            sha1((string) config('cineclean.tmdb.mcp_command', '')),
+            $language,
+            $tmdbId,
+        );
+        $ttl = now()->addDays((int) config('cineclean.tmdb.cache_days', 7));
+
+        /** @var array<string, float|int|string|null>|null $movie */
+        $movie = Cache::remember($cacheKey, $ttl, function () use ($tmdbId, $language): ?array {
+            return $this->mcpTmdbService->findMovieById($tmdbId, $language);
+        });
+
+        return $movie;
+    }
+
+    /**
+     * @return array<string, float|int|string|null>|null
+     */
+    private function findMovieByIdViaHttp(int $tmdbId, string $language): ?array
+    {
+        $cacheKey = sprintf('cineclean.tmdb.movie.%s.%d', $language, $tmdbId);
+        $ttl = now()->addDays((int) config('cineclean.tmdb.cache_days', 7));
+
+        /** @var array<string, mixed>|null $movie */
+        $movie = Cache::remember($cacheKey, $ttl, function () use ($tmdbId, $language): ?array {
+            $this->throttle();
+
+            $response = $this->tmdbRequest()->get(
+                sprintf('%s/movie/%d', rtrim((string) config('cineclean.tmdb.base_url'), '/'), $tmdbId),
+                ['language' => $language],
+            );
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $payload = $response->json();
+
+            if (! is_array($payload)) {
+                return null;
+            }
+
+            return $this->normalizeMovie($payload);
+        });
+
+        return $movie;
+    }
+
+    private function assertProviderConfiguration(): void
+    {
+        if ($this->providerMode() === 'mcp_only' && ! $this->isMcpEnabled()) {
+            throw new RuntimeException('TMDB MCP provider is set to mcp_only, but TMDB_MCP_ENABLED is false.');
+        }
+    }
+
+    private function shouldAttemptMcpProvider(): bool
+    {
+        if ($this->mcpUnavailableForRuntime) {
+            return false;
+        }
+
+        return $this->providerMode() !== 'http' && $this->isMcpEnabled();
+    }
+
+    private function shouldUseHttpProvider(): bool
+    {
+        return $this->providerMode() !== 'mcp_only';
+    }
+
+    private function shouldUseHttpFallback(): bool
+    {
+        return $this->shouldUseHttpProvider()
+            && (bool) config('cineclean.tmdb.mcp_http_fallback', true);
+    }
+
+    private function providerMode(): string
+    {
+        $provider = mb_strtolower(trim((string) config('cineclean.tmdb.provider', 'http')), 'UTF-8');
+
+        return in_array($provider, ['http', 'mcp_with_http_fallback', 'mcp_only'], true)
+            ? $provider
+            : 'http';
+    }
+
+    private function isMcpEnabled(): bool
+    {
+        return (bool) config('cineclean.tmdb.mcp_enabled', false);
+    }
+
+    private function disableMcpForRuntime(Throwable $exception): void
+    {
+        if ($this->mcpUnavailableForRuntime) {
+            return;
+        }
+
+        $this->mcpUnavailableForRuntime = true;
+
+        Log::warning('TMDB MCP provider failed, switching to HTTP provider for this request.', [
+            'provider' => $this->providerMode(),
+            'error' => $exception->getMessage(),
+        ]);
     }
 
     private function tmdbRequest(): PendingRequest

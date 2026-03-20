@@ -9,7 +9,6 @@ It scans movie files on your NAS, matches them against TMDB, groups duplicates b
 - Composer
 - SQLite (default) or MySQL
 - `smbclient` installed
-- A free MCP fetch server command for Google research (default: `uvx mcp-server-fetch`)
 
 Install `smbclient`:
 
@@ -50,6 +49,7 @@ SMBCLIENT_CONFIG_FILE=
 SMB_TIMEOUT_SECONDS=180
 TMDB_API_KEY=your-api-key
 TMDB_TOKEN=your-read-token
+TMDB_MCP_UV_CACHE_DIR=/tmp/moviesanalyzer-mcp-uv-cache
 MOVIESANALYZER_ALLOW_DELETE=false
 ```
 
@@ -57,17 +57,41 @@ If `smbclient` reports `Can't load ... smb.conf`, set `SMBCLIENT_CONFIG_FILE=/de
 `SMB_BACKEND=auto` uses `icewind/smb` first, then falls back to CLI.
 For Homebrew/macOS reliability, set `SMB_BACKEND=cli`.
 
-Google research for unmatched titles uses MCP (no Google API keys). Default `.env` values:
+## TMDB MCP Integration (MCP Market)
+
+This project supports the TMDB MCP server listed on MCP Market:
+`https://mcpmarket.com/server/tmdb`
+
+### Required tooling
+
+- Node.js 18+
+- pnpm 10.7+
+- `tsx` (used via `pnpm exec tsx`)
+- TMDB API key
+
+### Recommended setup
+
+```bash
+git clone https://github.com/leonardogilrodriguez/mcp-tmdb.git /absolute/path/to/mcp-tmdb
+pnpm --dir /absolute/path/to/mcp-tmdb install
+```
+
+Then set these values in `.env`:
 
 ```env
-GOOGLE_ASSIST_PROVIDER=mcp_google_fetch
-GOOGLE_ASSIST_MCP_COMMAND="uvx mcp-server-fetch"
-GOOGLE_ASSIST_MCP_TOOL=fetch
-GOOGLE_ASSIST_MCP_TIMEOUT_SECONDS=25
-GOOGLE_ASSIST_MCP_MAX_LENGTH=18000
-GOOGLE_ASSIST_MCP_UV_CACHE_DIR=/tmp/moviesanalyzer-mcp-uv-cache
-GOOGLE_ASSIST_GOOGLE_SEARCH_URL=https://www.google.com/search
+TMDB_PROVIDER=mcp_with_http_fallback
+TMDB_MCP_ENABLED=true
+TMDB_MCP_HTTP_FALLBACK=true
+TMDB_MCP_COMMAND="pnpm --dir /absolute/path/to/mcp-tmdb exec tsx main.ts"
+TMDB_MCP_TIMEOUT_SECONDS=30
+TMDB_MCP_SEARCH_TOOLS=search_movies,search_movie,movie_search,find_movie,two_actors_on_screen,two_people,two_movies,filmography_actor_genre,filmography_crew_genre
+TMDB_MCP_MOVIE_TOOLS=get_movie_details,get_movie,movie_details
+TMDB_MCP_RESOURCE_URIS=tmdb://movie/{id},tmdb:///movie/{id},tmdb://movie/{id}?language={language}
+TMDB_MCP_CACHE_HOURS=12
+TMDB_MCP_UV_CACHE_DIR=/tmp/moviesanalyzer-mcp-uv-cache
 ```
+
+`mcp_with_http_fallback` keeps searches working even if the MCP process is unavailable or returns no usable movie rows.
 
 ## CLI Scan
 

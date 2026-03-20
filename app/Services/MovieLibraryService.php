@@ -11,6 +11,8 @@ use Illuminate\Support\Collection;
 
 class MovieLibraryService
 {
+    public function __construct(private FilenameParser $filenameParser) {}
+
     /**
      * @return array<string, int>
      */
@@ -62,8 +64,10 @@ class MovieLibraryService
 
     public function movieCards(string $search = '', int $page = 1, int $perPage = 50): LengthAwarePaginator
     {
+        $searchTerms = $this->buildSearchTerms($search);
+
         $files = $this->matchedQuery()
-            ->search($search)
+            ->searchTerms($searchTerms)
             ->orderBy('tmdb_title')
             ->orderBy('movie_year')
             ->get();
@@ -84,6 +88,29 @@ class MovieLibraryService
         );
 
         return $paginator->withQueryString();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function buildSearchTerms(string $search): array
+    {
+        $normalizedSearch = trim($search);
+
+        if ($normalizedSearch === '') {
+            return [];
+        }
+
+        $parsedSearch = $this->filenameParser->parseSearchInput($normalizedSearch);
+        $terms = array_merge(
+            [$normalizedSearch, $parsedSearch->cleanTitle, $parsedSearch->baseName],
+            $parsedSearch->searchQueries,
+        );
+
+        return array_slice(array_values(array_unique(array_filter(array_map(
+            static fn (string $term): string => trim($term),
+            $terms,
+        )))), 0, 8);
     }
 
     private function matchedQuery(): Builder

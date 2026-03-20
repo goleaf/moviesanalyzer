@@ -5,7 +5,6 @@ use App\Data\TmdbMatch;
 use App\Enums\MatchStatus;
 use App\Models\MovieFile;
 use App\Models\ScanLog;
-use App\Services\GoogleMovieResearchService;
 use App\Services\SmbService;
 use App\Services\TmdbService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -88,7 +87,10 @@ it('searches and applies manual tmdb matches for unmatched files', function (): 
 
     $this->postJson(route('cineclean.unmatched.search', $movieFile), [
         'query' => 'The Matrix',
-    ])->assertSuccessful()->assertJsonCount(1, 'data');
+    ])
+        ->assertSuccessful()
+        ->assertJsonPath('normalized_query', 'The Matrix')
+        ->assertJsonCount(1, 'data');
 
     $this->patchJson(route('cineclean.unmatched.match', $movieFile), [
         'tmdb_id' => 603,
@@ -136,6 +138,85 @@ it('uses filename year as tmdb search parameter in manual search', function (): 
         'query' => 'The Matrix',
     ])
         ->assertSuccessful()
+        ->assertJsonPath('normalized_query', 'The Matrix')
+        ->assertJsonPath('search_year', 1999)
+        ->assertJsonCount(1, 'data');
+});
+
+it('uses explicitly provided year as tmdb search parameter in manual search', function (): void {
+    $movieFile = MovieFile::query()->create([
+        'smb_path' => 'Movies/The.Matrix.1999.BluRay.mkv',
+        'filename' => 'The.Matrix.1999.BluRay.mkv',
+        'file_size_bytes' => 1_400_000_000,
+        'extension' => 'mkv',
+        'parsed_release_year' => null,
+        'match_status' => 'unmatched',
+        'scanned_at' => now(),
+    ]);
+
+    $tmdbService = Mockery::mock(TmdbService::class);
+    $tmdbService->shouldReceive('searchCandidates')
+        ->once()
+        ->with('The Matrix', 2003)
+        ->andReturn([
+            [
+                'tmdb_id' => 604,
+                'title' => 'The Matrix Reloaded',
+                'original_title' => 'The Matrix Reloaded',
+                'release_year' => 2003,
+                'poster_path' => '/9TGHDvWrqKBzwDxDodHYXEmOE6J.jpg',
+                'overview' => 'Neo and allies continue the fight.',
+                'vote_average' => 7.0,
+                'tmdb_url' => 'https://www.themoviedb.org/movie/604',
+            ],
+        ]);
+
+    $this->app->instance(TmdbService::class, $tmdbService);
+
+    $this->postJson(route('cineclean.unmatched.search', $movieFile), [
+        'query' => 'The Matrix',
+        'year' => 2003,
+    ])
+        ->assertSuccessful()
+        ->assertJsonPath('normalized_query', 'The Matrix')
+        ->assertJsonPath('search_year', 2003)
+        ->assertJsonCount(1, 'data');
+});
+
+it('normalizes filename-like manual search query using parser rules before tmdb search', function (): void {
+    $movieFile = MovieFile::query()->create([
+        'smb_path' => 'Movies/unknown-file.mkv',
+        'filename' => 'unknown-file.mkv',
+        'file_size_bytes' => 700_000_000,
+        'extension' => 'mkv',
+        'match_status' => 'unmatched',
+        'scanned_at' => now(),
+    ]);
+
+    $tmdbService = Mockery::mock(TmdbService::class);
+    $tmdbService->shouldReceive('searchCandidates')
+        ->once()
+        ->with('The Matrix', 1999)
+        ->andReturn([
+            [
+                'tmdb_id' => 603,
+                'title' => 'The Matrix',
+                'original_title' => 'The Matrix',
+                'release_year' => 1999,
+                'poster_path' => '/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg',
+                'overview' => 'A hacker discovers reality is a simulation.',
+                'vote_average' => 8.2,
+                'tmdb_url' => 'https://www.themoviedb.org/movie/603',
+            ],
+        ]);
+
+    $this->app->instance(TmdbService::class, $tmdbService);
+
+    $this->postJson(route('cineclean.unmatched.search', $movieFile), [
+        'query' => 'The.Matrix.1999.1080p.BluRay.x264.mkv',
+    ])
+        ->assertSuccessful()
+        ->assertJsonPath('normalized_query', 'The Matrix')
         ->assertJsonPath('search_year', 1999)
         ->assertJsonCount(1, 'data');
 });
@@ -156,54 +237,6 @@ it('marks unmatched files as skipped when user chooses skip', function (): void 
     $movieFile->refresh();
 
     expect($movieFile->match_status->value)->toBe('skipped');
-});
-
-it('runs google assist research for unmatched files and returns tmdb candidates for user approval', function (): void {
-    $movieFile = MovieFile::query()->create([
-        'smb_path' => 'Movies/Matrix.Ultimate.Cut.1999.HDRip.mkv',
-        'filename' => 'Matrix.Ultimate.Cut.1999.HDRip.mkv',
-        'file_size_bytes' => 800_000_000,
-        'extension' => 'mkv',
-        'match_status' => 'unmatched',
-        'scanned_at' => now(),
-    ]);
-
-    $googleMovieResearchService = Mockery::mock(GoogleMovieResearchService::class);
-    $googleMovieResearchService->shouldReceive('research')
-        ->once()
-        ->with('Matrix.Ultimate.Cut.1999.HDRip.mkv', 'matrix 1999 movie')
-        ->andReturn([
-            'enabled' => true,
-            'provider' => 'mcp_google_fetch',
-            'query' => 'matrix 1999 movie',
-            'default_query' => 'Matrix movie',
-            'parsed_clean_title' => 'Matrix',
-            'title_suggestions' => ['The Matrix'],
-            'google_results' => [],
-            'tmdb_candidates' => [
-                [
-                    'tmdb_id' => 603,
-                    'title' => 'The Matrix',
-                    'original_title' => 'The Matrix',
-                    'release_year' => 1999,
-                    'poster_path' => '/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg',
-                    'overview' => 'A hacker discovers reality is a simulation.',
-                    'vote_average' => 8.2,
-                    'tmdb_url' => 'https://www.themoviedb.org/movie/603',
-                ],
-            ],
-            'message' => null,
-        ]);
-
-    $this->app->instance(GoogleMovieResearchService::class, $googleMovieResearchService);
-
-    $this->postJson(route('cineclean.unmatched.google-assist', $movieFile), [
-        'query' => 'matrix 1999 movie',
-    ])
-        ->assertSuccessful()
-        ->assertJsonPath('query', 'matrix 1999 movie')
-        ->assertJsonPath('title_suggestions.0', 'The Matrix')
-        ->assertJsonPath('tmdb_candidates.0.tmdb_id', 603);
 });
 
 it('rescans all unmatched files with current parser rules and updates matches', function (): void {

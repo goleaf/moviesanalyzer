@@ -33,3 +33,10 @@ it('adds transliterated cyrillic query variants', function (): void {
         ->toContain('матрица')
         ->toContain('matritsa');
 });
+
+it('parses filename-like search input without stripping non-video suffixes', function (): void {
+    $parsed = app(FilenameParser::class)->parseSearchInput('The.Matrix.1999');
+
+    expect($parsed->cleanTitle)->toBe('The Matrix')
+        ->and($parsed->releaseYear)->toBe(1999);
+});

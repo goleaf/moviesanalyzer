@@ -5,14 +5,12 @@ namespace App\Http\Controllers;
 use App\Actions\RescanMovieFileAction;
 use App\Actions\RescanUnmatchedMoviesAction;
 use App\Enums\MatchStatus;
-use App\Http\Requests\ManualGoogleAssistRequest;
 use App\Http\Requests\ManualMatchRequest;
 use App\Http\Requests\ManualTmdbSearchRequest;
 use App\Http\Requests\RescanUnmatchedRequest;
 use App\Http\Requests\SkipMovieRequest;
 use App\Models\MovieFile;
 use App\Services\FilenameParser;
-use App\Services\GoogleMovieResearchService;
 use App\Services\MovieLibraryService;
 use App\Services\TmdbService;
 use Illuminate\Http\JsonResponse;
@@ -59,19 +57,16 @@ class MoviesController extends Controller
             ->orderBy('id')
             ->get()
             ->map(function (MovieFile $movieFile) use ($filenameParser): MovieFile {
-                $effectiveCleanTitle = trim((string) ($movieFile->parsed_clean_title ?? ''));
-                $effectiveReleaseYear = $movieFile->parsed_release_year;
+                $parsedFilename = $filenameParser->parse($movieFile->filename);
+                $effectiveCleanTitle = trim($parsedFilename->cleanTitle);
+                $effectiveReleaseYear = $parsedFilename->releaseYear;
 
-                if ($effectiveCleanTitle === '' || $effectiveReleaseYear === null) {
-                    $parsedFilename = $filenameParser->parse($movieFile->filename);
+                if ($effectiveCleanTitle === '') {
+                    $effectiveCleanTitle = trim((string) ($movieFile->parsed_clean_title ?? ''));
+                }
 
-                    if ($effectiveCleanTitle === '') {
-                        $effectiveCleanTitle = $parsedFilename->cleanTitle;
-                    }
-
-                    if ($effectiveReleaseYear === null) {
-                        $effectiveReleaseYear = $parsedFilename->releaseYear;
-                    }
+                if ($effectiveReleaseYear === null) {
+                    $effectiveReleaseYear = $movieFile->parsed_release_year;
                 }
 
                 $movieFile->setAttribute('effective_clean_title', $effectiveCleanTitle);
@@ -126,30 +121,24 @@ class MoviesController extends Controller
         FilenameParser $filenameParser,
         TmdbService $tmdbService,
     ): JsonResponse {
-        $query = $request->string('query')->toString();
+        $queryInput = $request->string('query')->toString();
+        $parsedSearchQuery = $filenameParser->parseSearchInput($queryInput);
+        $query = $parsedSearchQuery->cleanTitle !== ''
+            ? $parsedSearchQuery->cleanTitle
+            : $queryInput;
         $requestYear = $request->integer('year');
-        $filenameYear = $movieFile->parsed_release_year
-            ?? $filenameParser->parse($movieFile->filename)->releaseYear;
-        $searchYear = $requestYear > 0 ? $requestYear : $filenameYear;
+        $filenameYear = $filenameParser->parse($movieFile->filename)->releaseYear
+            ?? $movieFile->parsed_release_year;
+        $searchYear = $requestYear > 0
+            ? $requestYear
+            : ($parsedSearchQuery->releaseYear ?? $filenameYear);
 
         return response()->json([
             'movie_file_id' => $movieFile->id,
+            'normalized_query' => $query,
             'search_year' => $searchYear,
             'data' => $tmdbService->searchCandidates($query, $searchYear),
         ]);
-    }
-
-    public function googleAssist(
-        ManualGoogleAssistRequest $request,
-        MovieFile $movieFile,
-        GoogleMovieResearchService $googleMovieResearchService,
-    ): JsonResponse {
-        return response()->json(
-            $googleMovieResearchService->research(
-                filename: $movieFile->filename,
-                queryOverride: $request->string('query')->toString(),
-            ),
-        );
     }
 
     public function applyManualMatch(

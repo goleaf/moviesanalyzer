@@ -101,12 +101,39 @@ class MovieFile extends Model
             return $query;
         }
 
-        return $query->where(function (Builder $builder) use ($search): void {
-            $builder
-                ->where('tmdb_title', 'like', "%{$search}%")
-                ->orWhere('tmdb_original_title', 'like', "%{$search}%")
-                ->orWhere('parsed_clean_title', 'like', "%{$search}%")
-                ->orWhere('filename', 'like', "%{$search}%");
+        return $query->searchTerms([$search]);
+    }
+
+    /**
+     * @param  array<int, string>  $terms
+     */
+    public function scopeSearchTerms(Builder $query, array $terms): Builder
+    {
+        $normalizedTerms = array_values(array_filter(array_map(
+            static fn (string $term): string => trim($term),
+            $terms,
+        )));
+
+        if ($normalizedTerms === []) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $builder) use ($normalizedTerms): void {
+            foreach ($normalizedTerms as $term) {
+                $builder->orWhere(function (Builder $termBuilder) use ($term): void {
+                    $termBuilder
+                        ->where('tmdb_title', 'like', "%{$term}%")
+                        ->orWhere('tmdb_original_title', 'like', "%{$term}%")
+                        ->orWhere('parsed_clean_title', 'like', "%{$term}%")
+                        ->orWhere('filename', 'like', "%{$term}%");
+
+                    if (is_numeric($term)) {
+                        $termBuilder
+                            ->orWhere('movie_year', (int) $term)
+                            ->orWhere('tmdb_year', (int) $term);
+                    }
+                });
+            }
         });
     }
 

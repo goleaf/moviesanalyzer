@@ -49,7 +49,20 @@ class FilenameParser
 
     public function parse(string $filename): ParsedFilename
     {
-        $baseName = pathinfo($filename, PATHINFO_FILENAME);
+        $baseName = (string) pathinfo($filename, PATHINFO_FILENAME);
+
+        return $this->parseFromBaseName($filename, $baseName);
+    }
+
+    public function parseSearchInput(string $input): ParsedFilename
+    {
+        $baseName = $this->searchBaseName($input);
+
+        return $this->parseFromBaseName($input, $baseName);
+    }
+
+    private function parseFromBaseName(string $originalInput, string $baseName): ParsedFilename
+    {
         $releaseYear = $this->extractReleaseYear($baseName);
         $normalized = $this->normalizeBaseName($baseName);
         $normalized = $this->filenameRuleService->applyReplacementRules($normalized);
@@ -108,12 +121,54 @@ class FilenameParser
         }
 
         return new ParsedFilename(
-            originalFilename: $filename,
+            originalFilename: $originalInput,
             baseName: $baseName,
             cleanTitle: $cleanTitle,
             releaseYear: $releaseYear,
             searchQueries: array_values(array_unique($searchQueries)),
         );
+    }
+
+    private function searchBaseName(string $input): string
+    {
+        $trimmedInput = trim($input);
+
+        if ($trimmedInput === '') {
+            return '';
+        }
+
+        $normalizedInput = str_replace('\\', '/', $trimmedInput);
+        $baseName = (string) pathinfo($normalizedInput, PATHINFO_BASENAME);
+
+        if ($baseName === '') {
+            $baseName = $trimmedInput;
+        }
+
+        $extension = mb_strtolower((string) pathinfo($baseName, PATHINFO_EXTENSION), 'UTF-8');
+        $videoExtensions = $this->videoExtensions();
+
+        if ($extension !== '' && in_array($extension, $videoExtensions, true)) {
+            return (string) pathinfo($baseName, PATHINFO_FILENAME);
+        }
+
+        return $baseName;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function videoExtensions(): array
+    {
+        $extensions = config('cineclean.smb.video_extensions', []);
+
+        if (! is_array($extensions)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            static fn (mixed $extension): string => mb_strtolower(trim((string) $extension), 'UTF-8'),
+            $extensions,
+        )));
     }
 
     private function normalizeBaseName(string $baseName): string

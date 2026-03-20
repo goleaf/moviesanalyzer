@@ -9,6 +9,8 @@ use Tests\TestCase;
 uses(TestCase::class);
 
 it('returns russian-localized title for matched movies', function (): void {
+    config()->set('cineclean.tmdb.provider', 'http');
+    config()->set('cineclean.tmdb.mcp_enabled', false);
     config()->set('cineclean.tmdb.preferred_language', 'ru-RU');
     config()->set('cineclean.tmdb.token', '');
     config()->set('cineclean.tmdb.api_key', 'demo-key');
@@ -53,6 +55,8 @@ it('returns russian-localized title for matched movies', function (): void {
 });
 
 it('localizes search candidates to russian when fallback english search is used', function (): void {
+    config()->set('cineclean.tmdb.provider', 'http');
+    config()->set('cineclean.tmdb.mcp_enabled', false);
     config()->set('cineclean.tmdb.preferred_language', 'ru-RU');
     config()->set('cineclean.tmdb.token', '');
     config()->set('cineclean.tmdb.api_key', 'demo-key');

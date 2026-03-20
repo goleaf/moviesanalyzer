@@ -6,7 +6,7 @@
     <section class="space-y-6">
         <div class="card p-4 md:p-6">
             <h2 class="font-cinema text-3xl">Unmatched Movies</h2>
-            <p class="text-muted mt-1 text-sm">Use Google MCP Assist to research titles, then confirm TMDB match manually.</p>
+            <p class="text-muted mt-1 text-sm">Search TMDB manually and confirm the correct match.</p>
             <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
                 <p id="unmatched-total" class="text-xs text-muted uppercase tracking-wide">Total unmatched: {{ $files->count() }}</p>
                 <button
@@ -59,23 +59,9 @@
                                 </button>
                                 <button
                                     type="button"
-                                    class="google-assist px-3 py-1.5 text-xs rounded-lg border border-amber-500/40 bg-amber-900/20 hover:bg-amber-800/30"
-                                    data-id="{{ $file->id }}"
-                                    data-search-url="{{ route('cineclean.unmatched.search', $file) }}"
-                                    data-assist-url="{{ route('cineclean.unmatched.google-assist', $file) }}"
-                                    data-match-url="{{ route('cineclean.unmatched.match', $file) }}"
-                                    data-filename="{{ $file->filename }}"
-                                    data-clean-title="{{ $file->effective_clean_title }}"
-                                    data-release-year="{{ $file->effective_release_year }}"
-                                >
-                                    Google MCP
-                                </button>
-                                <button
-                                    type="button"
                                     class="manual-search px-3 py-1.5 text-xs rounded-lg border border-cine bg-card hover:bg-white/5"
                                     data-id="{{ $file->id }}"
                                     data-search-url="{{ route('cineclean.unmatched.search', $file) }}"
-                                    data-assist-url="{{ route('cineclean.unmatched.google-assist', $file) }}"
                                     data-match-url="{{ route('cineclean.unmatched.match', $file) }}"
                                     data-filename="{{ $file->filename }}"
                                     data-clean-title="{{ $file->effective_clean_title }}"
@@ -108,13 +94,18 @@
     <div id="manual-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-4">
         <div class="max-w-6xl w-full mx-auto mt-6 md:mt-10 card p-6 space-y-4">
             <h3 class="font-cinema text-2xl">Manual Research &amp; TMDB Search</h3>
-            <input id="manual-query" type="text" class="w-full rounded-lg border border-cine bg-black/30 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/30">
-            <div class="flex items-center justify-between">
+            <div class="space-y-2">
+                <label for="manual-query" class="text-xs uppercase tracking-wide text-muted">Movie Title</label>
+                <input id="manual-query" type="text" class="w-full rounded-lg border border-cine bg-black/30 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/30">
+            </div>
+            <div class="space-y-2">
+                <label for="manual-year" class="text-xs uppercase tracking-wide text-muted">Movie Year (from filename)</label>
+                <input id="manual-year" type="number" min="1900" max="2099" inputmode="numeric" class="w-full rounded-lg border border-cine bg-black/30 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/30">
+            </div>
+            <div class="flex items-center justify-end gap-2">
                 <button id="manual-close" type="button" class="px-4 py-2 rounded-lg border border-cine hover:bg-white/5">Cancel</button>
-                <button id="manual-google-submit" type="button" class="px-4 py-2 rounded-lg border border-amber-500/40 bg-amber-900/20 hover:bg-amber-800/30">Google Research</button>
                 <button id="manual-search-submit" type="button" class="px-4 py-2 rounded-lg border border-cine bg-card hover:bg-white/5">Search</button>
             </div>
-            <div id="google-results" class="max-h-[26vh] overflow-auto border border-cine rounded-xl p-3 text-sm space-y-2"></div>
             <div id="manual-results" class="max-h-[56vh] overflow-auto border border-cine rounded-xl p-3 text-sm space-y-3"></div>
         </div>
     </div>
@@ -125,10 +116,9 @@
         (() => {
             const modal = document.getElementById('manual-modal');
             const queryInput = document.getElementById('manual-query');
+            const yearInput = document.getElementById('manual-year');
             const searchButton = document.getElementById('manual-search-submit');
-            const googleAssistButton = document.getElementById('manual-google-submit');
             const closeButton = document.getElementById('manual-close');
-            const googleResultsEl = document.getElementById('google-results');
             const resultsEl = document.getElementById('manual-results');
             const refreshAllButton = document.getElementById('refresh-all-one-by-one');
             const refreshAllStatus = document.getElementById('refresh-all-status');
@@ -144,8 +134,8 @@
             const hideModal = () => {
                 modal.classList.add('hidden');
                 activeContext = null;
-                googleResultsEl.innerHTML = '';
                 resultsEl.innerHTML = '';
+                yearInput.value = '';
             };
 
             const removeRow = (id) => {
@@ -252,26 +242,18 @@
                 }
             };
 
-            const openModal = (button, autoAssist) => {
+            const openModal = (button) => {
                 activeContext = {
                     id: button.dataset.id,
                     searchUrl: button.dataset.searchUrl,
-                    assistUrl: button.dataset.assistUrl,
                     matchUrl: button.dataset.matchUrl,
                     releaseYear: button.dataset.releaseYear ? Number(button.dataset.releaseYear) : null,
                 };
 
                 queryInput.value = button.dataset.cleanTitle || guessTitle(button.dataset.filename || '');
-                googleResultsEl.innerHTML = '<p class="text-muted">Use Google MCP Research to fetch title hints from web results.</p>';
-                resultsEl.innerHTML = '<p class="text-muted">Search TMDB manually or use Google suggestions first.</p>';
+                yearInput.value = activeContext.releaseYear !== null ? String(activeContext.releaseYear) : '';
+                resultsEl.innerHTML = '<p class="text-muted">Search TMDB manually.</p>';
                 modal.classList.remove('hidden');
-
-                if (autoAssist) {
-                    runGoogleAssist().catch((error) => {
-                        googleResultsEl.innerHTML = '<p class="text-red-300">Google research failed.</p>';
-                        window.MoviesAnalyzer.toast(error.message || 'Google research failed.', 'error');
-                    });
-                }
             };
 
             const renderTmdbResults = (movies) => {
@@ -355,67 +337,19 @@
                 });
             };
 
-            const renderGoogleResearch = (payload) => {
-                const titleSuggestions = Array.isArray(payload.title_suggestions) ? payload.title_suggestions : [];
-                const googleResults = Array.isArray(payload.google_results) ? payload.google_results : [];
-                const tmdbCandidates = Array.isArray(payload.tmdb_candidates) ? payload.tmdb_candidates : [];
-
-                const suggestionHtml = titleSuggestions.length === 0
-                    ? '<p class="text-muted">No title suggestions extracted.</p>'
-                    : `
-                        <div class="flex flex-wrap gap-2">
-                            ${titleSuggestions.map((title) => `
-                                <button type="button" class="google-suggestion px-2 py-1 rounded-lg border border-cine hover:bg-white/5 text-xs" data-title="${encodeURIComponent(title)}">
-                                    ${escapeHtml(title)}
-                                </button>
-                            `).join('')}
-                        </div>
-                    `;
-
-                const resultHtml = googleResults.length === 0
-                    ? '<p class="text-muted">No Google result snippets available.</p>'
-                    : googleResults.map((result) => `
-                        <div class="rounded-lg border border-cine/60 p-2">
-                            <p class="font-medium text-sm">${escapeHtml(result.title || 'Untitled result')}</p>
-                            <p class="text-xs text-muted">${escapeHtml(result.snippet || '')}</p>
-                            <a href="${safeUrl(result.link)}" target="_blank" rel="noopener noreferrer" class="text-xs text-amber-300 hover:text-amber-200">
-                                ${escapeHtml(result.display_link || result.link || 'Open source')}
-                            </a>
-                        </div>
-                    `).join('');
-
-                googleResultsEl.innerHTML = `
-                    <div class="space-y-2">
-                        <p class="text-xs text-muted">Provider: ${escapeHtml(payload.provider || 'google')} · Query: ${escapeHtml(payload.query || '')}</p>
-                        ${payload.message ? `<p class="text-xs text-amber-300">${escapeHtml(payload.message)}</p>` : ''}
-                        <div>
-                            <p class="text-xs uppercase tracking-wide text-muted mb-1">Suggested Titles</p>
-                            ${suggestionHtml}
-                        </div>
-                        <div>
-                            <p class="text-xs uppercase tracking-wide text-muted mb-1">Google Results</p>
-                            <div class="space-y-2">${resultHtml}</div>
-                        </div>
-                    </div>
-                `;
-
-                googleResultsEl.querySelectorAll('.google-suggestion').forEach((button) => {
-                    button.addEventListener('click', () => {
-                        queryInput.value = decodeURIComponent(button.dataset.title || '');
-                    });
-                });
-
-                if (tmdbCandidates.length > 0) {
-                    renderTmdbResults(tmdbCandidates);
-                }
-            };
-
             const runTmdbSearch = async () => {
                 if (!activeContext) {
                     return;
                 }
 
                 resultsEl.innerHTML = '<p class="text-muted">Searching TMDB...</p>';
+
+                const year = Number.parseInt((yearInput.value || '').trim(), 10);
+                const hasYear = Number.isInteger(year) && year >= 1900 && year <= 2099;
+
+                if (!hasYear && (yearInput.value || '').trim() !== '') {
+                    throw new Error('Year must be between 1900 and 2099.');
+                }
 
                 const response = await fetch(activeContext.searchUrl, {
                     method: 'POST',
@@ -426,7 +360,7 @@
                     },
                     body: JSON.stringify({
                         query: queryInput.value,
-                        year: activeContext.releaseYear,
+                        year: hasYear ? year : null,
                     }),
                 });
 
@@ -439,38 +373,8 @@
                 renderTmdbResults(payload.data);
             };
 
-            const runGoogleAssist = async () => {
-                if (!activeContext) {
-                    return;
-                }
-
-                googleResultsEl.innerHTML = '<p class="text-muted">Running Google MCP research...</p>';
-
-                const response = await fetch(activeContext.assistUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': window.MoviesAnalyzer.csrf,
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({ query: queryInput.value }),
-                });
-
-                const payload = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(payload.message || 'Google research failed.');
-                }
-
-                renderGoogleResearch(payload);
-            };
-
             document.querySelectorAll('.manual-search').forEach((button) => {
-                button.addEventListener('click', () => openModal(button, false));
-            });
-
-            document.querySelectorAll('.google-assist').forEach((button) => {
-                button.addEventListener('click', () => openModal(button, true));
+                button.addEventListener('click', () => openModal(button));
             });
 
             document.querySelectorAll('.refresh-one').forEach((button) => {
@@ -514,15 +418,6 @@
                 } catch (error) {
                     resultsEl.innerHTML = '<p class="text-red-300">Search failed.</p>';
                     window.MoviesAnalyzer.toast(error.message || 'Search failed.', 'error');
-                }
-            });
-
-            googleAssistButton.addEventListener('click', async () => {
-                try {
-                    await runGoogleAssist();
-                } catch (error) {
-                    googleResultsEl.innerHTML = '<p class="text-red-300">Google research failed.</p>';
-                    window.MoviesAnalyzer.toast(error.message || 'Google research failed.', 'error');
                 }
             });
 
