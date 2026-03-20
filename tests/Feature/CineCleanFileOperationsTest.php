@@ -104,6 +104,63 @@ it('searches and applies manual tmdb matches for unmatched files', function (): 
         ->and($movieFile->movie_year)->toBe(1999);
 });
 
+it('stores extended tmdb metadata fields when applying manual match', function (): void {
+    $movieFile = MovieFile::query()->create([
+        'smb_path' => 'Movies/the-matrix-extended.mkv',
+        'filename' => 'the-matrix-extended.mkv',
+        'file_size_bytes' => 1_800_000_000,
+        'extension' => 'mkv',
+        'match_status' => 'unmatched',
+        'scanned_at' => now(),
+    ]);
+
+    $tmdbService = Mockery::mock(TmdbService::class);
+    $tmdbService->shouldReceive('findMovieById')
+        ->once()
+        ->with(603)
+        ->andReturn([
+            'tmdb_id' => 603,
+            'title' => 'Матрица',
+            'original_title' => 'The Matrix',
+            'tmdb_original_language' => 'en',
+            'release_year' => 1999,
+            'tmdb_runtime' => 136,
+            'tmdb_release_date' => '1999-03-30',
+            'tmdb_tagline' => 'Welcome to the Real World.',
+            'tmdb_status' => 'Released',
+            'tmdb_imdb_id' => 'tt0133093',
+            'poster_path' => '/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg',
+            'overview' => 'Описание фильма',
+            'vote_average' => 8.2,
+            'tmdb_popularity' => 95.7,
+            'tmdb_vote_count' => 25000,
+            'tmdb_url' => 'https://www.themoviedb.org/movie/603',
+            'tmdb_metadata' => [
+                'genres' => ['Action', 'Science Fiction'],
+                'keywords' => ['artificial reality', 'hacker'],
+            ],
+        ]);
+
+    $this->app->instance(TmdbService::class, $tmdbService);
+
+    $this->patchJson(route('cineclean.unmatched.match', $movieFile), [
+        'tmdb_id' => 603,
+    ])->assertSuccessful();
+
+    $movieFile->refresh();
+
+    expect($movieFile->tmdb_id)->toBe(603)
+        ->and($movieFile->tmdb_original_language)->toBe('en')
+        ->and($movieFile->tmdb_runtime)->toBe(136)
+        ->and($movieFile->tmdb_release_date?->toDateString())->toBe('1999-03-30')
+        ->and($movieFile->tmdb_imdb_id)->toBe('tt0133093')
+        ->and($movieFile->tmdb_vote_count)->toBe(25000)
+        ->and($movieFile->tmdb_metadata)->toBe([
+            'genres' => ['Action', 'Science Fiction'],
+            'keywords' => ['artificial reality', 'hacker'],
+        ]);
+});
+
 it('uses filename year as tmdb search parameter in manual search', function (): void {
     $movieFile = MovieFile::query()->create([
         'smb_path' => 'Movies/The.Matrix.1999.BluRay.mkv',

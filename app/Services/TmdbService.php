@@ -97,7 +97,7 @@ class TmdbService
     }
 
     /**
-     * @return array<int, array<string, float|int|string|null>>
+     * @return array<int, array<string, mixed>>
      */
     public function searchCandidates(string $query, ?int $year = null): array
     {
@@ -137,7 +137,7 @@ class TmdbService
     }
 
     /**
-     * @return array<string, float|int|string|null>|null
+     * @return array<string, mixed>|null
      */
     public function findMovieById(int $tmdbId, ?string $language = null): ?array
     {
@@ -169,7 +169,7 @@ class TmdbService
     }
 
     /**
-     * @return array<int, array<string, float|int|string|null>>
+     * @return array<int, array<string, mixed>>
      */
     private function searchMovie(string $query, string $language, ?int $year = null): array
     {
@@ -197,7 +197,7 @@ class TmdbService
     }
 
     /**
-     * @return array<int, array<string, float|int|string|null>>
+     * @return array<int, array<string, mixed>>
      */
     private function searchMovieViaMcp(string $query, string $language, ?int $year = null): array
     {
@@ -211,7 +211,7 @@ class TmdbService
         );
         $ttl = now()->addDays((int) config('cineclean.tmdb.cache_days', 7));
 
-        /** @var array<int, array<string, float|int|string|null>> $movies */
+        /** @var array<int, array<string, mixed>> $movies */
         $movies = Cache::remember($cacheKey, $ttl, function () use ($query, $language, $searchYear): array {
             return $this->mcpTmdbService->searchMovies($query, $language, $searchYear);
         });
@@ -220,7 +220,7 @@ class TmdbService
     }
 
     /**
-     * @return array<int, array<string, float|int|string|null>>
+     * @return array<int, array<string, mixed>>
      */
     private function searchMovieViaHttp(string $query, string $language, ?int $year = null): array
     {
@@ -241,6 +241,16 @@ class TmdbService
                 'query' => $query,
                 'language' => $language,
             ];
+
+            if ((bool) config('cineclean.tmdb.search_include_adult', false)) {
+                $params['include_adult'] = true;
+            }
+
+            $region = trim((string) config('cineclean.tmdb.search_region', ''));
+
+            if ($region !== '') {
+                $params['region'] = $region;
+            }
 
             if ($searchYear !== null) {
                 $params['year'] = $searchYear;
@@ -291,7 +301,7 @@ class TmdbService
     }
 
     /**
-     * @return array<string, float|int|string|null>|null
+     * @return array<string, mixed>|null
      */
     private function findMovieByIdViaMcp(int $tmdbId, string $language): ?array
     {
@@ -303,7 +313,7 @@ class TmdbService
         );
         $ttl = now()->addDays((int) config('cineclean.tmdb.cache_days', 7));
 
-        /** @var array<string, float|int|string|null>|null $movie */
+        /** @var array<string, mixed>|null $movie */
         $movie = Cache::remember($cacheKey, $ttl, function () use ($tmdbId, $language): ?array {
             return $this->mcpTmdbService->findMovieById($tmdbId, $language);
         });
@@ -312,7 +322,7 @@ class TmdbService
     }
 
     /**
-     * @return array<string, float|int|string|null>|null
+     * @return array<string, mixed>|null
      */
     private function findMovieByIdViaHttp(int $tmdbId, string $language): ?array
     {
@@ -322,10 +332,22 @@ class TmdbService
         /** @var array<string, mixed>|null $movie */
         $movie = Cache::remember($cacheKey, $ttl, function () use ($tmdbId, $language): ?array {
             $this->throttle();
+            $params = ['language' => $language];
+            $appendToResponse = trim((string) config('cineclean.tmdb.details_append_to_response', ''));
+
+            if ($appendToResponse !== '') {
+                $params['append_to_response'] = $appendToResponse;
+            }
+
+            $includeImageLanguage = trim((string) config('cineclean.tmdb.details_include_image_language', ''));
+
+            if ($includeImageLanguage !== '') {
+                $params['include_image_language'] = $includeImageLanguage;
+            }
 
             $response = $this->tmdbRequest()->get(
                 sprintf('%s/movie/%d', rtrim((string) config('cineclean.tmdb.base_url'), '/'), $tmdbId),
-                ['language' => $language],
+                $params,
             );
 
             if (! $response->successful()) {
@@ -448,7 +470,7 @@ class TmdbService
 
     /**
      * @param  array<string, mixed>  $movie
-     * @return array<string, float|int|string|null>|null
+     * @return array<string, mixed>|null
      */
     private function normalizeMovie(array $movie): ?array
     {
@@ -456,29 +478,375 @@ class TmdbService
             return null;
         }
 
-        $releaseYear = null;
-        $releaseDate = (string) ($movie['release_date'] ?? '');
-
-        if ($releaseDate !== '' && preg_match('/^(\d{4})-\d{2}-\d{2}$/', $releaseDate, $matches)) {
-            $releaseYear = (int) $matches[1];
-        }
+        $releaseDate = $this->normalizeReleaseDate(
+            isset($movie['release_date']) && is_string($movie['release_date']) ? $movie['release_date'] : null,
+        );
+        $releaseYear = $this->extractReleaseYear($releaseDate);
 
         $tmdbId = (int) $movie['id'];
+        $metadata = $this->buildMetadata($movie);
 
         return [
             'tmdb_id' => $tmdbId,
             'title' => (string) ($movie['title'] ?? ''),
             'original_title' => (string) ($movie['original_title'] ?? ''),
+            'tmdb_original_language' => isset($movie['original_language']) && is_string($movie['original_language'])
+                ? $movie['original_language']
+                : null,
             'release_year' => $releaseYear,
+            'tmdb_runtime' => isset($movie['runtime']) && is_numeric($movie['runtime']) ? (int) $movie['runtime'] : null,
+            'tmdb_release_date' => $releaseDate,
+            'tmdb_tagline' => isset($movie['tagline']) && is_string($movie['tagline']) ? $movie['tagline'] : null,
+            'tmdb_status' => isset($movie['status']) && is_string($movie['status']) ? $movie['status'] : null,
+            'tmdb_imdb_id' => isset($movie['imdb_id']) && is_string($movie['imdb_id']) ? $movie['imdb_id'] : null,
             'poster_path' => isset($movie['poster_path']) && is_string($movie['poster_path']) ? $movie['poster_path'] : null,
             'overview' => isset($movie['overview']) && is_string($movie['overview']) ? $movie['overview'] : null,
             'vote_average' => isset($movie['vote_average']) ? (float) $movie['vote_average'] : null,
+            'tmdb_popularity' => isset($movie['popularity']) ? (float) $movie['popularity'] : null,
+            'tmdb_vote_count' => isset($movie['vote_count']) && is_numeric($movie['vote_count'])
+                ? (int) $movie['vote_count']
+                : null,
             'tmdb_url' => sprintf('https://www.themoviedb.org/movie/%d', $tmdbId),
+            'tmdb_metadata' => $metadata,
         ];
     }
 
+    private function normalizeReleaseDate(?string $releaseDate): ?string
+    {
+        if ($releaseDate === null || $releaseDate === '') {
+            return null;
+        }
+
+        if (! preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $releaseDate)) {
+            return null;
+        }
+
+        return $releaseDate;
+    }
+
+    private function extractReleaseYear(?string $releaseDate): ?int
+    {
+        if ($releaseDate === null) {
+            return null;
+        }
+
+        if (! preg_match('/^(\d{4})-\d{2}-\d{2}$/', $releaseDate, $matches)) {
+            return null;
+        }
+
+        return (int) $matches[1];
+    }
+
     /**
-     * @param  array<string, float|int|string|null>  $candidate
+     * @param  array<string, mixed>  $movie
+     * @return array<string, mixed>|null
+     */
+    private function buildMetadata(array $movie): ?array
+    {
+        $genres = $this->extractNamedList($movie['genres'] ?? null, 'name');
+        $keywords = $this->extractKeywordNames($movie['keywords'] ?? null);
+        $productionCountries = $this->extractNamedList($movie['production_countries'] ?? null, 'name');
+        $spokenLanguages = $this->extractNamedList($movie['spoken_languages'] ?? null, 'english_name');
+        $videos = $this->extractVideos($movie['videos'] ?? null);
+        $watchProviders = $this->extractWatchProviders($movie['watch/providers'] ?? null);
+        $releaseDates = $this->extractRegionalReleaseDates($movie['release_dates'] ?? null);
+        $recommendations = $this->extractRelatedTitles($movie['recommendations'] ?? null);
+        $similar = $this->extractRelatedTitles($movie['similar'] ?? null);
+        $cast = $this->extractCastNames($movie['credits'] ?? null);
+        $translations = $this->extractTranslationCodes($movie['translations'] ?? null);
+        $alternativeTitles = $this->extractAlternativeTitles($movie['alternative_titles'] ?? null);
+
+        $metadata = array_filter([
+            'genres' => $genres,
+            'keywords' => $keywords,
+            'production_countries' => $productionCountries,
+            'spoken_languages' => $spokenLanguages,
+            'videos' => $videos,
+            'watch_providers' => $watchProviders,
+            'release_dates' => $releaseDates,
+            'recommendations' => $recommendations,
+            'similar' => $similar,
+            'cast' => $cast,
+            'translations' => $translations,
+            'alternative_titles' => $alternativeTitles,
+        ], static fn (mixed $value): bool => $value !== null && $value !== []);
+
+        return $metadata !== [] ? $metadata : null;
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractNamedList(mixed $value, string $nameKey): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $names = [];
+
+        foreach ($value as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $name = $item[$nameKey] ?? null;
+
+            if (is_string($name) && trim($name) !== '') {
+                $names[] = trim($name);
+            }
+        }
+
+        if ($names === []) {
+            return null;
+        }
+
+        return array_values(array_unique($names));
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractKeywordNames(mixed $value): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $keywordRows = $value['keywords'] ?? $value['results'] ?? null;
+
+        if (! is_array($keywordRows)) {
+            return null;
+        }
+
+        return $this->extractNamedList($keywordRows, 'name');
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractVideos(mixed $value): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $rows = $value['results'] ?? null;
+
+        if (! is_array($rows)) {
+            return null;
+        }
+
+        $videos = [];
+
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $site = isset($row['site']) && is_string($row['site']) ? $row['site'] : null;
+            $type = isset($row['type']) && is_string($row['type']) ? $row['type'] : null;
+            $key = isset($row['key']) && is_string($row['key']) ? $row['key'] : null;
+
+            if ($site === null || $type === null || $key === null) {
+                continue;
+            }
+
+            $videos[] = sprintf('%s:%s:%s', $site, $type, $key);
+        }
+
+        if ($videos === []) {
+            return null;
+        }
+
+        return array_slice($videos, 0, 20);
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractWatchProviders(mixed $value): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $results = $value['results'] ?? null;
+
+        if (! is_array($results)) {
+            return null;
+        }
+
+        $providers = [];
+
+        foreach ($results as $regionData) {
+            if (! is_array($regionData)) {
+                continue;
+            }
+
+            foreach (['flatrate', 'rent', 'buy', 'ads', 'free'] as $bucket) {
+                $bucketRows = $regionData[$bucket] ?? null;
+
+                if (! is_array($bucketRows)) {
+                    continue;
+                }
+
+                foreach ($bucketRows as $provider) {
+                    if (! is_array($provider)) {
+                        continue;
+                    }
+
+                    $name = $provider['provider_name'] ?? null;
+
+                    if (is_string($name) && trim($name) !== '') {
+                        $providers[] = trim($name);
+                    }
+                }
+            }
+        }
+
+        if ($providers === []) {
+            return null;
+        }
+
+        return array_slice(array_values(array_unique($providers)), 0, 50);
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractRegionalReleaseDates(mixed $value): ?array
+    {
+        if (! is_array($value) || ! is_array($value['results'] ?? null)) {
+            return null;
+        }
+
+        $rows = [];
+
+        foreach ($value['results'] as $resultRow) {
+            if (! is_array($resultRow)) {
+                continue;
+            }
+
+            $country = $resultRow['iso_3166_1'] ?? null;
+
+            if (! is_string($country) || trim($country) === '') {
+                continue;
+            }
+
+            if (is_array($resultRow['release_dates'] ?? null) && ($resultRow['release_dates'] !== [])) {
+                $rows[] = trim($country);
+            }
+        }
+
+        if ($rows === []) {
+            return null;
+        }
+
+        return array_values(array_unique($rows));
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractRelatedTitles(mixed $value): ?array
+    {
+        if (! is_array($value) || ! is_array($value['results'] ?? null)) {
+            return null;
+        }
+
+        $titles = [];
+
+        foreach ($value['results'] as $resultRow) {
+            if (! is_array($resultRow)) {
+                continue;
+            }
+
+            $title = $resultRow['title'] ?? $resultRow['name'] ?? null;
+
+            if (is_string($title) && trim($title) !== '') {
+                $titles[] = trim($title);
+            }
+        }
+
+        if ($titles === []) {
+            return null;
+        }
+
+        return array_slice(array_values(array_unique($titles)), 0, 20);
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractCastNames(mixed $value): ?array
+    {
+        if (! is_array($value) || ! is_array($value['cast'] ?? null)) {
+            return null;
+        }
+
+        return $this->extractNamedList(array_slice($value['cast'], 0, 20), 'name');
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractTranslationCodes(mixed $value): ?array
+    {
+        if (! is_array($value) || ! is_array($value['translations'] ?? null)) {
+            return null;
+        }
+
+        $codes = [];
+
+        foreach ($value['translations'] as $translation) {
+            if (! is_array($translation)) {
+                continue;
+            }
+
+            $iso639 = $translation['iso_639_1'] ?? null;
+            $iso3166 = $translation['iso_3166_1'] ?? null;
+
+            if (! is_string($iso639) || trim($iso639) === '') {
+                continue;
+            }
+
+            if (is_string($iso3166) && trim($iso3166) !== '') {
+                $codes[] = sprintf('%s-%s', trim($iso639), trim($iso3166));
+
+                continue;
+            }
+
+            $codes[] = trim($iso639);
+        }
+
+        if ($codes === []) {
+            return null;
+        }
+
+        return array_values(array_unique($codes));
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractAlternativeTitles(mixed $value): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $rows = $value['titles'] ?? $value['results'] ?? null;
+
+        if (! is_array($rows)) {
+            return null;
+        }
+
+        return $this->extractNamedList($rows, 'title');
+    }
+
+    /**
+     * @param  array<string, mixed>  $candidate
      */
     private function calculateConfidence(ParsedFilename $parsedFilename, array $candidate): float
     {
@@ -511,8 +879,8 @@ class TmdbService
     }
 
     /**
-     * @param  array<string, float|int|string|null>  $candidate
-     * @return array<string, float|int|string|null>
+     * @param  array<string, mixed>  $candidate
+     * @return array<string, mixed>
      */
     private function localizeCandidate(array $candidate, string $language): array
     {
@@ -530,8 +898,8 @@ class TmdbService
     }
 
     /**
-     * @param  array<int, array<string, float|int|string|null>>  $candidates
-     * @return array<int, array<string, float|int|string|null>>
+     * @param  array<int, array<string, mixed>>  $candidates
+     * @return array<int, array<string, mixed>>
      */
     private function localizeCandidates(array $candidates, string $language): array
     {

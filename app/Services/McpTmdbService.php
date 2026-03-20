@@ -473,7 +473,7 @@ class McpTmdbService
 
     /**
      * @param  array<string, mixed>  $movie
-     * @return array<string, float|int|string|null>|null
+     * @return array<string, mixed>|null
      */
     private function normalizeMovie(array $movie): ?array
     {
@@ -507,25 +507,190 @@ class McpTmdbService
         $posterPath = $this->extractString($movie, ['poster_path', 'poster']);
         $overview = $this->extractString($movie, ['overview', 'description', 'plot']);
         $voteAverage = $this->extractFloat($movie, ['vote_average', 'rating']);
+        $voteCount = $this->extractInt($movie, ['vote_count']);
+        $popularity = $this->extractFloat($movie, ['popularity']);
         $releaseYear = $this->extractInt($movie, ['release_year', 'year']);
+        $runtime = $this->extractInt($movie, ['runtime', 'runtime_minutes']);
+        $tagline = $this->extractString($movie, ['tagline']);
+        $statusText = $this->extractString($movie, ['status']);
+        $imdbId = $this->extractString($movie, ['imdb_id']);
+        $originalLanguage = $this->extractString($movie, ['original_language']);
+        $releaseDate = $this->extractString($movie, ['release_date', 'first_air_date']);
 
         if ($releaseYear === null) {
-            $releaseDate = $this->extractString($movie, ['release_date', 'first_air_date']);
             $releaseYear = $this->extractYearFromDate($releaseDate);
         }
 
         $tmdbUrl = $this->extractString($movie, ['tmdb_url', 'url']) ?? sprintf('https://www.themoviedb.org/movie/%d', $tmdbId);
+        $metadata = isset($movie['tmdb_metadata']) && is_array($movie['tmdb_metadata'])
+            ? $movie['tmdb_metadata']
+            : $this->buildMetadata($movie);
 
         return [
             'tmdb_id' => $tmdbId,
             'title' => $title,
             'original_title' => $originalTitle,
+            'tmdb_original_language' => $originalLanguage,
             'release_year' => $releaseYear,
+            'tmdb_runtime' => $runtime,
+            'tmdb_release_date' => $this->normalizeReleaseDate($releaseDate),
+            'tmdb_tagline' => $tagline,
+            'tmdb_status' => $statusText,
+            'tmdb_imdb_id' => $imdbId,
             'poster_path' => $posterPath,
             'overview' => $overview,
             'vote_average' => $voteAverage,
+            'tmdb_popularity' => $popularity,
+            'tmdb_vote_count' => $voteCount,
             'tmdb_url' => $tmdbUrl,
+            'tmdb_metadata' => $metadata,
         ];
+    }
+
+    private function normalizeReleaseDate(?string $releaseDate): ?string
+    {
+        if ($releaseDate === null || $releaseDate === '') {
+            return null;
+        }
+
+        return preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $releaseDate) === 1
+            ? $releaseDate
+            : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $movie
+     * @return array<string, mixed>|null
+     */
+    private function buildMetadata(array $movie): ?array
+    {
+        $genres = $this->extractNamedList($movie['genres'] ?? null, 'name');
+        $keywords = $this->extractKeywordNames($movie['keywords'] ?? null);
+        $productionCountries = $this->extractNamedList($movie['production_countries'] ?? null, 'name');
+        $spokenLanguages = $this->extractNamedList($movie['spoken_languages'] ?? null, 'english_name');
+        $videos = $this->extractVideos($movie['videos'] ?? null);
+        $providers = $this->extractWatchProviders($movie['watch/providers'] ?? null);
+
+        $metadata = array_filter([
+            'genres' => $genres,
+            'keywords' => $keywords,
+            'production_countries' => $productionCountries,
+            'spoken_languages' => $spokenLanguages,
+            'videos' => $videos,
+            'watch_providers' => $providers,
+        ], static fn (mixed $value): bool => $value !== null && $value !== []);
+
+        return $metadata !== [] ? $metadata : null;
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractNamedList(mixed $value, string $nameKey): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $names = [];
+
+        foreach ($value as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $name = $item[$nameKey] ?? null;
+
+            if (is_string($name) && trim($name) !== '') {
+                $names[] = trim($name);
+            }
+        }
+
+        return $names !== [] ? array_values(array_unique($names)) : null;
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractKeywordNames(mixed $value): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $rows = $value['keywords'] ?? $value['results'] ?? null;
+
+        if (! is_array($rows)) {
+            return null;
+        }
+
+        return $this->extractNamedList($rows, 'name');
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractVideos(mixed $value): ?array
+    {
+        if (! is_array($value) || ! is_array($value['results'] ?? null)) {
+            return null;
+        }
+
+        $videos = [];
+
+        foreach ($value['results'] as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $site = $item['site'] ?? null;
+            $type = $item['type'] ?? null;
+            $key = $item['key'] ?? null;
+
+            if (is_string($site) && is_string($type) && is_string($key)) {
+                $videos[] = sprintf('%s:%s:%s', trim($site), trim($type), trim($key));
+            }
+        }
+
+        return $videos !== [] ? array_slice(array_values(array_unique($videos)), 0, 20) : null;
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function extractWatchProviders(mixed $value): ?array
+    {
+        if (! is_array($value) || ! is_array($value['results'] ?? null)) {
+            return null;
+        }
+
+        $providers = [];
+
+        foreach ($value['results'] as $regionData) {
+            if (! is_array($regionData)) {
+                continue;
+            }
+
+            foreach (['flatrate', 'rent', 'buy', 'ads', 'free'] as $bucket) {
+                if (! is_array($regionData[$bucket] ?? null)) {
+                    continue;
+                }
+
+                foreach ($regionData[$bucket] as $provider) {
+                    if (! is_array($provider)) {
+                        continue;
+                    }
+
+                    $name = $provider['provider_name'] ?? null;
+
+                    if (is_string($name) && trim($name) !== '') {
+                        $providers[] = trim($name);
+                    }
+                }
+            }
+        }
+
+        return $providers !== [] ? array_slice(array_values(array_unique($providers)), 0, 50) : null;
     }
 
     /**

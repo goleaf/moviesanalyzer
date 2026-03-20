@@ -29,12 +29,21 @@ class MovieFile extends Model
         'tmdb_id',
         'tmdb_title',
         'tmdb_original_title',
+        'tmdb_original_language',
         'tmdb_year',
         'movie_year',
+        'tmdb_runtime',
+        'tmdb_release_date',
+        'tmdb_tagline',
+        'tmdb_status',
+        'tmdb_imdb_id',
         'tmdb_poster_path',
         'tmdb_overview',
         'tmdb_vote_average',
+        'tmdb_popularity',
+        'tmdb_vote_count',
         'tmdb_url',
+        'tmdb_metadata',
         'match_status',
         'match_confidence',
         'scanned_at',
@@ -52,7 +61,12 @@ class MovieFile extends Model
             'tmdb_id' => 'integer',
             'tmdb_year' => 'integer',
             'movie_year' => 'integer',
+            'tmdb_runtime' => 'integer',
+            'tmdb_release_date' => 'date',
             'tmdb_vote_average' => 'float',
+            'tmdb_popularity' => 'float',
+            'tmdb_vote_count' => 'integer',
+            'tmdb_metadata' => 'array',
             'match_confidence' => 'float',
             'match_status' => MatchStatus::class,
             'scanned_at' => 'datetime',
@@ -124,6 +138,7 @@ class MovieFile extends Model
                     $termBuilder
                         ->where('tmdb_title', 'like', "%{$term}%")
                         ->orWhere('tmdb_original_title', 'like', "%{$term}%")
+                        ->orWhere('tmdb_imdb_id', 'like', "%{$term}%")
                         ->orWhere('parsed_clean_title', 'like', "%{$term}%")
                         ->orWhere('filename', 'like', "%{$term}%");
 

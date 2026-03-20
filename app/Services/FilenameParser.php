@@ -45,6 +45,55 @@ class FilenameParser
         'я' => 'ya',
     ];
 
+    /**
+     * @var array<string, string>
+     */
+    private const LATIN_DIGRAPH_TO_CYRILLIC_MAP = [
+        'shch' => 'щ',
+        'yiy' => 'ый',
+        'yy' => 'ый',
+        'yo' => 'ё',
+        'zh' => 'ж',
+        'kh' => 'х',
+        'ts' => 'ц',
+        'ch' => 'ч',
+        'sh' => 'ш',
+        'yu' => 'ю',
+        'ya' => 'я',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    private const LATIN_MAP = [
+        'a' => 'а',
+        'b' => 'б',
+        'c' => 'к',
+        'd' => 'д',
+        'e' => 'е',
+        'f' => 'ф',
+        'g' => 'г',
+        'h' => 'х',
+        'i' => 'и',
+        'j' => 'й',
+        'k' => 'к',
+        'l' => 'л',
+        'm' => 'м',
+        'n' => 'н',
+        'o' => 'о',
+        'p' => 'п',
+        'q' => 'к',
+        'r' => 'р',
+        's' => 'с',
+        't' => 'т',
+        'u' => 'у',
+        'v' => 'в',
+        'w' => 'в',
+        'x' => 'кс',
+        'y' => 'й',
+        'z' => 'з',
+    ];
+
     public function __construct(private FilenameRuleService $filenameRuleService) {}
 
     public function parse(string $filename): ParsedFilename
@@ -120,6 +169,14 @@ class FilenameParser
             }
         }
 
+        if (! $this->containsCyrillic($cleanTitle) && $this->looksLikeTransliteratedLatin($cleanTitle)) {
+            $cyrillic = $this->transliterateLatinToCyrillic($cleanTitle);
+
+            if ($cyrillic !== '' && $cyrillic !== $cleanTitle) {
+                $searchQueries[] = $cyrillic;
+            }
+        }
+
         return new ParsedFilename(
             originalFilename: $originalInput,
             baseName: $baseName,
@@ -173,7 +230,9 @@ class FilenameParser
 
     private function normalizeBaseName(string $baseName): string
     {
-        return trim(preg_replace('/\s+/u', ' ', $baseName) ?? $baseName);
+        $normalized = preg_replace('/[._-]+/u', ' ', $baseName) ?? $baseName;
+
+        return trim(preg_replace('/\s+/u', ' ', $normalized) ?? $normalized);
     }
 
     private function moveTrailingArticle(string $value): string
@@ -243,14 +302,63 @@ class FilenameParser
         ?int $releaseYear,
         bool $hasTechnicalTokens,
     ): bool {
-        if (! $this->filenameRuleService->shouldTruncateAfterToken($normalizedToken)) {
-            return false;
-        }
-
         if ($cleanTokenCount < 2) {
             return false;
         }
 
-        return $releaseYear !== null || $hasTechnicalTokens;
+        if ($this->filenameRuleService->shouldTruncateAfterToken($normalizedToken)) {
+            return $releaseYear !== null || $hasTechnicalTokens;
+        }
+
+        if (! $hasTechnicalTokens) {
+            return false;
+        }
+
+        return $this->looksLikeReleaseGroupToken($normalizedToken);
+    }
+
+    private function looksLikeReleaseGroupToken(string $token): bool
+    {
+        if (! preg_match('/^[a-z0-9]+$/u', $token)) {
+            return false;
+        }
+
+        if (preg_match('/^(part|chapter|volume|vol|episode|season|movie)$/u', $token) === 1) {
+            return false;
+        }
+
+        $length = mb_strlen($token, 'UTF-8');
+
+        if ($length < 5) {
+            return false;
+        }
+
+        if (preg_match('/\d/u', $token) === 1) {
+            return true;
+        }
+
+        return $length >= 8;
+    }
+
+    private function looksLikeTransliteratedLatin(string $value): bool
+    {
+        if (preg_match('/\p{Cyrillic}/u', $value) === 1) {
+            return false;
+        }
+
+        if (preg_match('/^[\p{Latin}\p{N}\s\'"]+$/u', $value) !== 1) {
+            return false;
+        }
+
+        return preg_match('/(?:zh|kh|ch|sh|ya|yu|yo|yy|iy)/iu', $value) === 1;
+    }
+
+    private function transliterateLatinToCyrillic(string $value): string
+    {
+        $normalized = mb_strtolower($value, 'UTF-8');
+        $normalized = strtr($normalized, self::LATIN_DIGRAPH_TO_CYRILLIC_MAP);
+        $normalized = strtr($normalized, self::LATIN_MAP);
+
+        return trim(preg_replace('/\s+/u', ' ', $normalized) ?? '');
     }
 }

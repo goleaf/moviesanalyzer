@@ -243,6 +243,10 @@
             };
 
             const openModal = (button) => {
+                const parserCleanTitle = String(button.dataset.cleanTitle || '').trim();
+                const guessedTitle = guessTitle(button.dataset.filename || '');
+                const parserLooksRaw = /[._-]/.test(parserCleanTitle);
+
                 activeContext = {
                     id: button.dataset.id,
                     searchUrl: button.dataset.searchUrl,
@@ -250,10 +254,17 @@
                     releaseYear: button.dataset.releaseYear ? Number(button.dataset.releaseYear) : null,
                 };
 
-                queryInput.value = button.dataset.cleanTitle || guessTitle(button.dataset.filename || '');
+                queryInput.value = parserCleanTitle !== '' && !parserLooksRaw
+                    ? parserCleanTitle
+                    : guessedTitle;
                 yearInput.value = activeContext.releaseYear !== null ? String(activeContext.releaseYear) : '';
                 resultsEl.innerHTML = '<p class="text-muted">Search TMDB manually.</p>';
                 modal.classList.remove('hidden');
+
+                runTmdbSearch().catch((error) => {
+                    resultsEl.innerHTML = '<p class="text-red-300">Search failed.</p>';
+                    window.MoviesAnalyzer.toast(error.message || 'Search failed.', 'error');
+                });
             };
 
             const renderTmdbResults = (movies) => {
@@ -265,6 +276,16 @@
                 resultsEl.innerHTML = movies.map((movie) => {
                     const overview = String(movie.overview || '').trim();
                     const poster = posterUrl(movie);
+                    const runtime = Number.isInteger(Number(movie.tmdb_runtime))
+                        ? `${Number(movie.tmdb_runtime)} min`
+                        : null;
+                    const originalLanguage = String(movie.tmdb_original_language || '').trim().toUpperCase();
+                    const imdbId = String(movie.tmdb_imdb_id || '').trim();
+                    const metadata = movie.tmdb_metadata && typeof movie.tmdb_metadata === 'object'
+                        ? movie.tmdb_metadata
+                        : {};
+                    const genres = Array.isArray(metadata.genres) ? metadata.genres.join(', ') : '';
+                    const providers = Array.isArray(metadata.watch_providers) ? metadata.watch_providers.join(', ') : '';
 
                     return `
                         <div class="rounded-xl border border-cine p-4 grid grid-cols-1 md:grid-cols-[120px,1fr,auto] gap-4 items-start">
@@ -295,6 +316,11 @@
                                     </a>
                                 </div>
                                 <p class="text-xs text-muted">★ ${escapeHtml(movie.vote_average ?? 'n/a')} · TMDB #${escapeHtml(movie.tmdb_id)}</p>
+                                <p class="text-xs text-muted">
+                                    ${runtime ? `Runtime: ${escapeHtml(runtime)} · ` : ''}${originalLanguage ? `Lang: ${escapeHtml(originalLanguage)} · ` : ''}${imdbId ? `IMDb: ${escapeHtml(imdbId)}` : ''}
+                                </p>
+                                ${genres ? `<p class="text-xs text-muted">Genres: ${escapeHtml(genres)}</p>` : ''}
+                                ${providers ? `<p class="text-xs text-muted">Streaming: ${escapeHtml(providers)}</p>` : ''}
                                 <p class="text-xs uppercase tracking-wide text-muted">Описание (RU)</p>
                                 <p class="text-sm leading-relaxed whitespace-pre-line">${escapeHtml(overview || 'Русское описание недоступно для этого фильма.')}</p>
                             </div>

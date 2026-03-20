@@ -11,6 +11,11 @@
     "sail": false,
     "skills": [
         "pest-testing",
-        "tailwindcss-development"
+        "tailwindcss-development",
+        "laravel-best-practices",
+        "laravel-database-optimization",
+        "laravel-mcp",
+        "laravel-owasp-security",
+        "laravel-testing"
     ]
 }

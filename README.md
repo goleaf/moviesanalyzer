@@ -49,6 +49,10 @@ SMBCLIENT_CONFIG_FILE=
 SMB_TIMEOUT_SECONDS=180
 TMDB_API_KEY=your-api-key
 TMDB_TOKEN=your-read-token
+TMDB_SEARCH_INCLUDE_ADULT=false
+TMDB_SEARCH_REGION=
+TMDB_DETAILS_APPEND_TO_RESPONSE=alternative_titles,credits,external_ids,images,keywords,release_dates,recommendations,similar,translations,videos,watch/providers
+TMDB_DETAILS_INCLUDE_IMAGE_LANGUAGE=null,en
 TMDB_MCP_UV_CACHE_DIR=/tmp/moviesanalyzer-mcp-uv-cache
 MOVIESANALYZER_ALLOW_DELETE=false
 ```
@@ -92,6 +96,67 @@ TMDB_MCP_UV_CACHE_DIR=/tmp/moviesanalyzer-mcp-uv-cache
 ```
 
 `mcp_with_http_fallback` keeps searches working even if the MCP process is unavailable or returns no usable movie rows.
+
+## Serena MCP Integration (MCP Market)
+
+This project now includes Serena MCP server registration in `.mcp.json`:
+`https://mcpmarket.com/server/serena`
+
+### Prerequisites
+
+- `uv` / `uvx` installed and available in `PATH`
+- MCP-capable client (Codex, Claude Code, Cursor, etc.)
+
+### Configured server entry
+
+`.mcp.json` includes:
+
+```json
+{
+  "mcpServers": {
+    "serena": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "codex",
+        "--project-from-cwd"
+      ]
+    }
+  }
+}
+```
+
+### First run in Codex
+
+Serena is configured with `--project-from-cwd`, so it should auto-attach to this repository.
+If your client session still needs explicit activation, run:
+
+```text
+Use the serena tool activate_project with: /Users/andrejprus/Herd/moviesanalyzer
+```
+
+Then Serena semantic tools become available for symbol-level retrieval/editing in this codebase.
+
+### Extended movie enrichment
+
+The HTTP movie details call uses TMDB `append_to_response` to enrich matched titles with:
+
+- credits
+- external IDs (IMDb)
+- keywords
+- release dates
+- videos
+- watch providers
+- recommendations
+- similar
+- translations
+- alternative titles
+
+These values are normalized and saved into `movie_files` (`tmdb_*` columns + `tmdb_metadata` JSON) for richer analysis and manual-review context.
 
 ## CLI Scan
 

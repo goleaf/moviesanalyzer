@@ -1,7 +1,9 @@
 <?php
 
 use App\Services\FilenameParser;
+use App\Services\FilenameRuleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -39,4 +41,25 @@ it('parses filename-like search input without stripping non-video suffixes', fun
 
     expect($parsed->cleanTitle)->toBe('The Matrix')
         ->and($parsed->releaseYear)->toBe(1999);
+});
+
+it('cleans transliterated filename-like search input used on unmatched page', function (): void {
+    $parsed = app(FilenameParser::class)->parseSearchInput(
+        'Zhutkaya.semeyka.svadebnyiy.perepoloh.2023.Web-Dl.1080P.elektri4Ka.uniongang',
+    );
+
+    expect($parsed->cleanTitle)->toBe('Zhutkaya Semeyka Svadebnyiy Perepoloh')
+        ->and($parsed->releaseYear)->toBe(2023)
+        ->and(collect($parsed->searchQueries)->contains(
+            fn (string $query): bool => preg_match('/\p{Cyrillic}/u', $query) === 1,
+        ))->toBeTrue();
+});
+
+it('recovers parser rules when active-rules cache is stale and empty', function (): void {
+    Cache::put(FilenameRuleService::CACHE_KEY, collect(), now()->addMinutes(30));
+
+    $service = app(FilenameRuleService::class);
+
+    expect($service->shouldRemoveToken('web'))->toBeTrue()
+        ->and($service->shouldRemoveToken('1080p'))->toBeTrue();
 });

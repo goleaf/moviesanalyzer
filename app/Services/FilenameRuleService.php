@@ -50,25 +50,25 @@ class FilenameRuleService
                 return $this->cachedActiveRules;
             }
 
-            /** @var Collection<int, FilenameRule> $rules */
-            $rules = Cache::remember(self::CACHE_KEY, now()->addMinutes(60), function (): Collection {
-                return FilenameRule::query()
-                    ->select([
-                        'id',
-                        'rule_mode',
-                        'pattern',
-                        'replacement',
-                        'is_regex',
-                        'is_case_sensitive',
-                        'whole_word',
-                        'sort_order',
-                        'is_active',
-                        'notes',
-                    ])
-                    ->active()
-                    ->ordered()
-                    ->get();
-            });
+            $cachedRules = Cache::get(self::CACHE_KEY);
+
+            if ($cachedRules instanceof Collection) {
+                /** @var Collection<int, FilenameRule> $rules */
+                $rules = $cachedRules;
+            } else {
+                Cache::forget(self::CACHE_KEY);
+                $rules = $this->queryActiveRules();
+                Cache::put(self::CACHE_KEY, $rules, now()->addMinutes(60));
+            }
+
+            if (
+                $rules->isEmpty()
+                && FilenameRule::query()->where('is_active', true)->exists()
+            ) {
+                Cache::forget(self::CACHE_KEY);
+                $rules = $this->queryActiveRules();
+                Cache::put(self::CACHE_KEY, $rules, now()->addMinutes(60));
+            }
 
             $this->cachedActiveRules = $rules;
 
@@ -191,6 +191,29 @@ class FilenameRuleService
     private function canUseFacades(): bool
     {
         return Facade::getFacadeApplication() !== null;
+    }
+
+    /**
+     * @return Collection<int, FilenameRule>
+     */
+    private function queryActiveRules(): Collection
+    {
+        return FilenameRule::query()
+            ->select([
+                'id',
+                'rule_mode',
+                'pattern',
+                'replacement',
+                'is_regex',
+                'is_case_sensitive',
+                'whole_word',
+                'sort_order',
+                'is_active',
+                'notes',
+            ])
+            ->active()
+            ->ordered()
+            ->get();
     }
 
     /**
