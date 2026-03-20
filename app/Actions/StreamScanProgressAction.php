@@ -14,8 +14,14 @@ class StreamScanProgressAction
     {
         $progressKey = (string) config('cineclean.scan.progress_cache_key');
         $startFlagKey = (string) config('cineclean.scan.start_flag_cache_key');
+        $cacheTtl = now()->addMinutes((int) config('cineclean.scan.cache_ttl_minutes', 360));
+        $maxPollAttempts = max(1, (int) config('cineclean.scan.stream_max_poll_attempts', 50));
+        $pollIntervalMicros = max(100000, ((int) config('cineclean.scan.stream_poll_interval_ms', 500)) * 1000);
 
-        return response()->stream(function () use ($progressKey, $startFlagKey): void {
+        return response()->stream(function () use ($progressKey, $startFlagKey, $cacheTtl, $maxPollAttempts, $pollIntervalMicros): void {
+            @set_time_limit(0);
+            @ignore_user_abort(true);
+
             $emit = function (array $payload): void {
                 echo "event: progress\n";
                 echo 'data: '.json_encode($payload, JSON_UNESCAPED_UNICODE)."\n\n";
@@ -35,6 +41,7 @@ class StreamScanProgressAction
                 'eta_seconds' => null,
                 'matched' => 0,
                 'unmatched' => 0,
+                'heartbeat_at' => null,
             ]);
 
             $emit($progress);
@@ -54,16 +61,18 @@ class StreamScanProgressAction
                         'finished' => true,
                         'status' => 'failed',
                         'error' => $throwable->getMessage(),
+                        'heartbeat_at' => now()->toIso8601String(),
+                        'finished_at' => now()->toIso8601String(),
                     ];
 
-                    Cache::put($progressKey, $failedPayload, now()->addMinutes(30));
+                    Cache::put($progressKey, $failedPayload, $cacheTtl);
                     $emit($failedPayload);
                 }
             }
 
             $attempts = 0;
 
-            while (! connection_aborted() && $attempts < 600) {
+            while (! connection_aborted() && $attempts < $maxPollAttempts) {
                 /** @var array<string, mixed> $latest */
                 $latest = Cache::get($progressKey, $progress);
 
@@ -73,7 +82,7 @@ class StreamScanProgressAction
                     break;
                 }
 
-                usleep(500000);
+                usleep($pollIntervalMicros);
                 $attempts++;
             }
         }, 200, [

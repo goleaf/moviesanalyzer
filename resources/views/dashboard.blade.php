@@ -76,6 +76,21 @@
             const metaEl = document.getElementById('scan-meta');
             const barEl = document.getElementById('scan-progress-bar');
             let stream = null;
+            let reconnectTimer = null;
+            let reconnectErrors = 0;
+            let scanFinished = false;
+
+            const closeStream = () => {
+                if (stream) {
+                    stream.close();
+                    stream = null;
+                }
+
+                if (reconnectTimer) {
+                    clearTimeout(reconnectTimer);
+                    reconnectTimer = null;
+                }
+            };
 
             const updateProgress = (payload) => {
                 const total = Number(payload.total || 0);
@@ -97,14 +112,13 @@
                         setTimeout(() => window.location.href = @json(route('cineclean.duplicates.index')), 1200);
                     }
 
-                    if (stream) {
-                        stream.close();
-                    }
+                    scanFinished = true;
+                    closeStream();
                 }
             };
 
             const connectStream = () => {
-                if (stream) {
+                if (stream || scanFinished) {
                     return;
                 }
 
@@ -112,13 +126,30 @@
                 stream.addEventListener('progress', (event) => {
                     try {
                         const payload = JSON.parse(event.data);
+                        reconnectErrors = 0;
                         updateProgress(payload);
                     } catch (error) {
                         console.error(error);
                     }
                 });
                 stream.onerror = () => {
-                    window.MoviesAnalyzer.toast('Progress stream disconnected.', 'error');
+                    closeStream();
+
+                    if (scanFinished) {
+                        return;
+                    }
+
+                    reconnectErrors += 1;
+
+                    if (reconnectErrors >= 3) {
+                        window.MoviesAnalyzer.toast('Reconnecting to scan progress...', 'info');
+                        reconnectErrors = 0;
+                    }
+
+                    reconnectTimer = setTimeout(() => {
+                        reconnectTimer = null;
+                        connectStream();
+                    }, 1500);
                 };
             };
 

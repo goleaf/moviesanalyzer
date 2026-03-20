@@ -60,6 +60,9 @@ return [
         'progress_cache_key' => 'cineclean.scan.progress',
         'start_flag_cache_key' => 'cineclean.scan.requested',
         'cache_ttl_minutes' => 360,
+        'stale_after_seconds' => (int) env('CINECLEAN_SCAN_STALE_AFTER_SECONDS', 900),
+        'stream_max_poll_attempts' => (int) env('CINECLEAN_SCAN_STREAM_MAX_POLL_ATTEMPTS', 50),
+        'stream_poll_interval_ms' => (int) env('CINECLEAN_SCAN_STREAM_POLL_INTERVAL_MS', 500),
     ],
     'files' => [
         'allow_delete' => (bool) env('MOVIESANALYZER_ALLOW_DELETE', env('CINECLEAN_ALLOW_DELETE', false)),

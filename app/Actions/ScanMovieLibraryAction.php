@@ -61,6 +61,7 @@ class ScanMovieLibraryAction
         $unmatched = 0;
 
         $emitProgress = function (array $payload) use ($progressKey, $cacheTtl, $progressCallback): void {
+            $payload['heartbeat_at'] = now()->toIso8601String();
             Cache::put($progressKey, $payload, $cacheTtl);
 
             if ($progressCallback !== null) {
